@@ -120,6 +120,8 @@ const char kModPagespeedBlockingRewriteRefererUrls[] =
 const char kModPagespeedConsoleDomains[] = "ModPagespeedConsoleDomains";
 const char kModPagespeedCreateSharedMemoryMetadataCache[] =
     "ModPagespeedCreateSharedMemoryMetadataCache";
+const char kModPagespeedCustomAsyncUrl[] = "ModPagespeedCustomAsyncUrl";
+const char kModPagespeedCustomDeferUrl[] = "ModPagespeedCustomDeferUrl";
 const char kModPagespeedCustomFetchHeader[] = "ModPagespeedCustomFetchHeader";
 const char kModPagespeedDisableFilters[] = "ModPagespeedDisableFilters";
 const char kModPagespeedDisableForBots[] = "ModPagespeedDisableForBots";
@@ -1775,6 +1777,10 @@ static const command_rec mod_pagespeed_filter_cmds[] = {
   APACHE_CONFIG_OPTION(kModPagespeedBlockingRewriteRefererUrls,
                        "wildcard_spec for referer urls which trigger blocking "
                        "rewrites"),
+  APACHE_CONFIG_OPTION(kModPagespeedCustomAsyncUrl,
+        "List of urls to be made async."),
+  APACHE_CONFIG_OPTION(kModPagespeedCustomDeferUrl,
+        "List of urls to be deferred."),
 
   // All two parameter options that are allowed in <Directory> blocks.
   APACHE_CONFIG_DIR_OPTION2(kModPagespeedCustomFetchHeader,
