@@ -61,6 +61,12 @@
 #include "pagespeed/kernel/util/input_file_nonce_generator.h"
 #include "pagespeed/kernel/util/nonce_generator.h"
 
+//Lagrange
+#include "net/instaweb/rewriter/public/blink_util.h" 
+#include "pagespeed/automatic/cache_html_flow.h"
+#include "pagespeed/automatic/flush_early_flow.h"
+//Lagrange end
+
 namespace net_instaweb {
 
 class ProcessContext;
@@ -192,8 +198,12 @@ void SystemRewriteDriverFactory::InitStats(Statistics* statistics) {
   SystemCaches::InitStats(statistics);
   PropertyCache::InitCohortStats(RewriteDriver::kBeaconCohort, statistics);
   PropertyCache::InitCohortStats(RewriteDriver::kDomCohort, statistics);
+  PropertyCache::InitCohortStats(BlinkUtil::kBlinkCohort, statistics);  //Lagrange: init stats fo blink cohort
   InPlaceResourceRecorder::InitStats(statistics);
   RateController::InitStats(statistics);
+
+  CacheHtmlFlow::InitStats(statistics); //Lagrange: need this for html_cache_flow
+  FlushEarlyFlow::InitStats(statistics); //Lagrange: need this for flush_early flow
 
   statistics->AddVariable(kShutdownCount);
 }

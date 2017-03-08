@@ -61,6 +61,14 @@
 #include "pagespeed/system/in_place_resource_recorder.h"
 #include "pagespeed/system/system_rewrite_options.h"
 
+//Lagrange
+#include "net/instaweb/rewriter/public/blink_util.h" 
+#include "net/instaweb/http/public/log_record.h"
+#include "base/logging.h"
+#include "pagespeed/automatic/cache_html_flow.h"
+#include "pagespeed/automatic/flush_early_flow.h"
+// Lagrange end
+
 #include "http_config.h"
 #include "http_core.h"
 #include "http_protocol.h"
@@ -519,7 +527,8 @@ bool InstawebHandler::HandleAsProxy() {
   // know anything about, and does not know how to absolutify.  We need to
   // handle the request for the external font file here, even if IPRO (in place
   // resource optimization) is off.
-  bool is_proxy = false;
+  
+  bool is_proxy = false; 
   GoogleString mapped_url;
   GoogleString host_header;
   if (options_->domain_lawyer()->MapOriginUrl(stripped_gurl_, &mapped_url,
@@ -566,7 +575,121 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
     handled = instaweb_handler.HandleAsInPlace();
   }
 
+ // Lagrange: attempt to handle HTML through cache_html_flow 
+  if (!handled)
+    handled = instaweb_handler.LG_HandleAsPartialHtml(request);
+ // If not handled here html will go through mod_proxy and get rewrited in output filter  
+ // Lagrange end
+
   return handled;
+}
+//Lagrange
+bool InstawebHandler::LG_HandleAsPartialHtml(request_rec* request){
+  bool handled = false;
+
+  // 1. Check if this is a blink request and get the hell out of here if it is not
+    GoogleString my_url;
+    stripped_gurl_.Spec().CopyToString(&my_url); 
+//    scoped_ptr<ApacheFetch> apache_fetch(new ApacheFetch(my_url, server_context_, request_, request_context_, options_)); 
+ 
+    // START IZ trying to get this working 
+    RequestHeaders* request_headers = new RequestHeaders();
+    // I don't really know if I should be doing the request headers bit.
+    ApacheRequestToRequestHeaders(*request_, request_headers);
+    scoped_ptr<ApacheFetch> apache_fetch(new ApacheFetch(
+                          my_url,
+                          "accelerator",
+                          server_context_->thread_system(),
+                          server_context_->timer(),
+                          new ApacheWriter(request_,
+                                            server_context_->thread_system()),
+                          request_headers,
+                          request_context_,
+                          options_,
+                          server_context_->message_handler()));
+    // fetch_->set_buffered(buffered);  do I need this?
+    // END IZ
+
+    const char* user_agent = apache_fetch.get()->request_headers()->Lookup1(
+        HttpAttributes::kUserAgent);
+     // should make a request from a qualified client, e.g., browser: curl, wget won't qualify   
+     bool is_cache_html_request =  BlinkUtil::IsBlinkRequest(
+                                                                stripped_gurl_,
+                                                                apache_fetch.get(),
+                                                                options_,
+                                                                user_agent,
+                                                                server_context_,
+                                                                RewriteOptions::kCachePartialHtml);
+     if (!is_cache_html_request) {
+       return false;
+     }
+
+
+      // shortcut if this request is configured to be excluded from caching 
+      if (is_cache_html_request && apr_table_get(request->subprocess_env, "no-cache") != NULL){
+        apr_table_addn(request->notes, "Lagrange-Cache", "HTML CACHE EXCLUDED");
+        return handled;
+      }
+
+       ProxyFetchPropertyCallbackCollector* property_callback = NULL;
+       apache_fetch->set_is_proxy(true); // need this?
+       bool is_resource_fetch = false; // otherwise property callback won't be created
+
+       RewriteDriver* driver = MakeDriver(); //This will take a driver from the pool, and html_writer_filter will be set there
+       
+       driver->SetRequestHeaders(*apache_fetch->request_headers());
+
+       property_callback = server_context_->proxy_fetch_factory()->InitiatePropertyCacheLookup(
+                                                      is_resource_fetch,
+                                                      stripped_gurl_, //mapped_url,
+                                                      server_context_,
+                                                      (RewriteOptions *)options_,
+                                                      apache_fetch.get(),
+                                                      is_cache_html_request);
+
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+                      "property_callback for url : %s %pp", stripped_gurl_.spec_c_str(), property_callback);
+
+
+      if (driver->options() != NULL && driver->options()->enabled() &&
+         property_callback != NULL &&
+         driver->options()->IsAllowed(my_url)){ 
+
+         if (is_cache_html_request){
+           apr_table_addn(request->notes, "LG_partial_html", "1");   // pass to output filter, so it can disable itself
+
+           CacheHtmlFlow::Start(my_url, 
+                             apache_fetch.get(),
+                             driver,
+                             server_context_->proxy_fetch_factory(), 
+                             // Takes ownership of property_callback.
+                             property_callback);
+         
+           apache_fetch->Wait(driver);
+           
+           return handled = true;
+        }
+
+        AsyncFetch* async_fetch = apache_fetch.get();      
+        FlushEarlyFlow::TryStart(my_url,
+                                &async_fetch,
+                                driver,
+                                server_context_->proxy_fetch_factory(),
+                                property_callback);
+      
+     }
+     /*  
+     server_context_->proxy_fetch_factory()->StartNewProxyFetch(
+          my_url,
+          apache_fetch.get(),
+          driver,
+          property_callback, //NULL,  
+          NULL   //AsyncFetch* original_content_fetch
+          );
+      apache_fetch->Wait();
+      handled = true;
+     */
+  return handled; 
 }
 
 // Write response headers and send out headers and output, including the option

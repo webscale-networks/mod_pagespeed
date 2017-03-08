@@ -127,7 +127,7 @@ class SystemRewriteDriverFactory : public RewriteDriverFactory {
   //   error_index is the index in server_contexts of the one with the issue.
   // - global_statistics is lazily initialized to a shared memory statistics
   //   owned by this factory if any of the server contexts require it.
-  void PostConfig(const std::vector<SystemServerContext*>& server_contexts,
+  virtual void PostConfig(const std::vector<SystemServerContext*>& server_contexts,
                   GoogleString* error_message,
                   int* error_index,
                   Statistics** global_statistics);
