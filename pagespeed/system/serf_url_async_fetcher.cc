@@ -474,8 +474,9 @@ apr_status_t SerfFetch::HandleResponse(serf_bucket_t* response) {
   // one byte at a time, or anything in between.  If we get EAGAIN we need to
   // return it to our caller so it can do more work and call us again.  See the
   // serf example code in serf_get.c.
-  apr_status_t status = APR_EAGAIN;
-  while (MoreDataAvailable(status) && (async_fetch_ != NULL) &&
+  apr_status_t status = APR_EINTR;
+  while ((status == APR_EINTR || status == APR_SUCCESS) &&
+         (async_fetch_ != NULL) &&
          !parser_.headers_complete()) {
     if (!status_line_read_) {
         status = ReadStatusLine(response);
@@ -585,11 +586,11 @@ apr_status_t SerfFetch::ReadHeaders(serf_bucket_t* response) {
 }
 
 apr_status_t SerfFetch::ReadBody(serf_bucket_t* response) {
-  apr_status_t status = APR_EAGAIN;
+  apr_status_t status = APR_EINTR;
   const char* data = NULL;
   apr_size_t len = 0;
   apr_size_t bytes_to_flush = 0;
-  while (MoreDataAvailable(status) && (async_fetch_ != NULL)) {
+  while ((status == APR_EINTR) && (async_fetch_ != NULL)) {
     status = serf_bucket_read(response, SERF_READ_ALL_AVAIL, &data, &len);
     if (APR_STATUS_IS_EAGAIN(status)) {
       break;

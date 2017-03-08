@@ -1224,6 +1224,11 @@ RewriteOptions::RewriteOptions(ThreadSystem* thread_system)
 
   // Enable HtmlWriterFilter by default.
   EnableFilter(kHtmlWriterFilter);
+  
+  // Lagrange: this is probably not the right place to do this
+  EnableFilter(kFlushSubresources);
+  set_enable_blink_html_change_detection(true);
+  // Lagrange end
 }
 
 // static
@@ -1507,9 +1512,10 @@ void RewriteOptions::AddProperties() {
       kDirectoryScope, "Enable insertion of client-side critical "
       "image detection js for image optimization filters.", true);
   AddBaseProperty(
-      false, &RewriteOptions::
-                 test_only_prioritize_critical_css_dont_apply_original_css_,
-      "dlacae", kTestOnlyPrioritizeCriticalCssDontApplyOriginalCss,
+      false,
+  &RewriteOptions::test_only_prioritize_critical_css_dont_apply_original_css_,
+      "dlacae",
+      kTestOnlyPrioritizeCriticalCssDontApplyOriginalCss,
       kDirectoryScope,
       "Stops the prioritize_critical_css filter from invoking its JavaScript "
       "that applies all the 'hidden' CSS at onload. Intended for testing.",
@@ -1640,7 +1646,7 @@ void RewriteOptions::AddProperties() {
       kDirectoryScope,
       "Disable pre-emptive background fetches on bot requests.", true);
   AddBaseProperty(
-      true,  // By default, don't optimize resource if no-transform is set.
+      true,   // By default, don't optimize resource if no-transform is set.
       &RewriteOptions::disable_rewrite_on_no_transform_, "drnt",
       kDisableRewriteOnNoTransform, kDirectoryScope,
       "If false, resource is rewritten even if no-transform header is set",
@@ -1653,7 +1659,8 @@ void RewriteOptions::AddProperties() {
       "the metadata cache", true);
   AddBaseProperty(
       false, &RewriteOptions::proactive_resource_freshening_, "prf",
-      kProactiveResourceFreshening, kServerScope,
+      kProactiveResourceFreshening,
+      kServerScope,
       "If true, allows proactive freshening of inputs to the resource when "
       "they are close to expiry.",
       true);  // TODO(mpalem): write end user doc in
@@ -2268,7 +2275,7 @@ void RewriteOptions::AddProperties() {
       "", &RewriteOptions::non_cacheables_for_cache_partial_html_, "nccp",
       kNonCacheablesForCachePartialHtml,
       kDirectoryScope,
-      NULL, false);  // Not applicable for mod_pagespeed.
+      "Lagrange enabled: list non-cacheable parts of html", false);  // Not applicable for mod_pagespeed.
 
   AddBaseProperty(
       false, &RewriteOptions::no_transform_optimized_images_, "ntoi",
@@ -2301,7 +2308,10 @@ void RewriteOptions::AddProperties() {
       "Serve rewritten .webp images to any user-agent", true);
 
   AddBaseProperty(
-      "", &RewriteOptions::cache_fragment_, "ckp", kCacheFragment,
+      "",
+      &RewriteOptions::cache_fragment_,
+      "ckp",
+      kCacheFragment,
       kDirectoryScope,
       "Set a cache fragment to allow servers with different hostnames to "
       "share a cache.  Allowed: letters, numbers, underscores, and hyphens.",
@@ -3341,7 +3351,7 @@ RewriteOptions::ParseAndSetOptionFromNameWithScope(
   } else if (StringCaseEqual(name, kRetainComment)) {
     RetainComment(arg);
   } else if (StringCaseEqual(name, kBlockingRewriteRefererUrls)) {
-    EnableBlockingRewriteForRefererUrlPattern(arg);
+      EnableBlockingRewriteForRefererUrlPattern(arg);
   } else {
     result = RewriteOptions::kOptionNameUnknown;
   }
@@ -4376,7 +4386,6 @@ GoogleString RewriteOptions::OptionsToString() const {
   StrAppend(&output, domain_lawyer_->ToString("  "));
   // TODO(mmohabey): Incorporate ToString() from the file_load_policy,
   // allow_resources, and retain_comments.
-
   if (!url_cache_invalidation_entries_.empty()) {
     StrAppend(&output, "\nURL cache invalidation entries\n");
     for (int i = 0, n = url_cache_invalidation_entries_.size(); i < n; ++i) {
@@ -4384,7 +4393,6 @@ GoogleString RewriteOptions::OptionsToString() const {
                 "\n");
     }
   }
-
   if (rejected_request_map_.size() > 0) {
     StrAppend(&output, "\nRejected request map\n");
     FastWildcardGroupMap::const_iterator it = rejected_request_map_.begin();
