@@ -120,6 +120,8 @@ const char kModPagespeedBlockingRewriteRefererUrls[] =
 const char kModPagespeedConsoleDomains[] = "ModPagespeedConsoleDomains";
 const char kModPagespeedCreateSharedMemoryMetadataCache[] =
     "ModPagespeedCreateSharedMemoryMetadataCache";
+const char kModPagespeedCustomAsyncUrl[] = "ModPagespeedCustomAsyncUrl";
+const char kModPagespeedCustomDeferUrl[] = "ModPagespeedCustomDeferUrl";
 const char kModPagespeedCustomFetchHeader[] = "ModPagespeedCustomFetchHeader";
 const char kModPagespeedDisableFilters[] = "ModPagespeedDisableFilters";
 const char kModPagespeedDisableForBots[] = "ModPagespeedDisableForBots";
@@ -1724,6 +1726,10 @@ static const command_rec mod_pagespeed_filter_cmds[] = {
   APACHE_CONFIG_DIR_OPTION(kModPagespeedSpeedTracking,
         "Increase the percentage of sites that have Google Analytics page "
         "speed tracking"),
+  APACHE_CONFIG_DIR_OPTION(kModPagespeedCustomAsyncUrl,
+        "List of urls to be made async."),
+  APACHE_CONFIG_DIR_OPTION(kModPagespeedCustomDeferUrl,
+        "List of urls to be deferred."),
 
   // All one parameter deprecated options.
   APACHE_CONFIG_DIR_OPTION(kModPagespeedImgInlineMaxBytes,

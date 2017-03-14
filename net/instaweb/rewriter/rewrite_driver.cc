@@ -133,6 +133,8 @@
 #include "net/instaweb/rewriter/public/url_input_resource.h"
 #include "net/instaweb/rewriter/public/url_left_trim_filter.h"
 #include "net/instaweb/rewriter/public/url_namer.h"
+#include "net/instaweb/rewriter/public/webscale_make_scripts_async.h"
+#include "net/instaweb/rewriter/public/webscale_make_scripts_defer.h"
 #include "net/instaweb/util/public/fallback_property_page.h"
 #include "pagespeed/kernel/base/basictypes.h"
 #include "pagespeed/kernel/base/callback.h"
@@ -905,6 +907,8 @@ void RewriteDriver::InitStats(Statistics* statistics) {
   RewriteContext::InitStats(statistics);
   UrlInputResource::InitStats(statistics);
   UrlLeftTrimFilter::InitStats(statistics);
+  WebscaleMakeScriptsAsync::InitStats(statistics);
+  WebscaleMakeScriptsDefer::InitStats(statistics);
 }
 
 void RewriteDriver::Terminate() {
@@ -1088,6 +1092,12 @@ void RewriteDriver::AddPreRenderFilters() {
   if (rewrite_options->Enabled(RewriteOptions::kMakeShowAdsAsync)) {
     // We want this filter early in case we ever inline the loader JS.
     AppendOwnedPreRenderFilter(new MakeShowAdsAsyncFilter(this));
+  }
+  if (rewrite_options->Enabled(RewriteOptions::kWebscaleMakeScriptsAsync)) {
+    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsAsync(this));
+  }
+  if (rewrite_options->Enabled(RewriteOptions::kWebscaleMakeScriptsDefer)) {
+    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsDefer(this));
   }
   if (rewrite_options->Enabled(RewriteOptions::kSplitHtml) &&
       server_context()->factory()->UseBeaconResultsInFilters()) {
