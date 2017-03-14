@@ -27,13 +27,13 @@ class WebscaleMakeScriptsAsync : public CommonFilter {
   explicit WebscaleMakeScriptsAsync(RewriteDriver* rewrite_driver);
   virtual ~WebscaleMakeScriptsAsync();
 
-  // statistics is not really used. The comments in
+  // Statistics is not really used. The comments in
   // net/instaweb/rewriter/rewrite_driver.cc mentions that it is good for all
-  // new filters to export statistics. If it does, it should be added
-  // InitStats() else it breaks under Apache.
+  // new filters to export statistics. If it does, it should be added to
+  // InitStats(), else it breaks under Apache.
   static void InitStats(Statistics* statistics);
 
-  // Constructs a string with all custom urls escaped and or-red.
+  // Constructs a string with all custom urls escaped and separated by bitwise OR operators.
   // Returns a string that is stored in escaped_urls.
   static GoogleString ConstructPatternFromCustomUrls(const RewriteOptions* options);
 
@@ -49,7 +49,7 @@ class WebscaleMakeScriptsAsync : public CommonFilter {
   }
 
   private:
-    // A string which contains the custom urls escaped and or-red.
+    // A string which contains the custom urls escaped and separated by bitwise OR operators.
     // Example: If the custom urls are ["js/a1.js", "js/a2.js"]
     // escaped_urls will finally be: "js\/a1\\.js|js\\/a2\\.js"
     GoogleString escaped_urls;

@@ -79,16 +79,11 @@ GoogleString WebscaleMakeScriptsAsync::ConstructPatternFromCustomUrls(const Rewr
   GoogleString prefix = "";
   GoogleString pattern = "";
 
-  if (number_of_custom_urls == 0) {
-    return pattern;
+  for(int i = 0; i < number_of_custom_urls; i++) {
+    pattern += prefix + RE2::QuoteMeta(options->custom_async_url(i)->c_str());
+    prefix = '|';
   }
-  else {
-    for(int i = 0; i < number_of_custom_urls; i++) {
-      pattern += prefix + RE2::QuoteMeta(options->custom_async_url(i)->c_str());
-      prefix = '|';
-    }
-    return pattern;
-  }
+  return pattern;
 }
 
 
