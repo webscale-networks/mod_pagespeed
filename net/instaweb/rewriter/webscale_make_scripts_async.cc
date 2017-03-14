@@ -22,14 +22,13 @@
 
 namespace net_instaweb {
 
-WebscaleMakeScriptsAsync::WebscaleMakeScriptsAsync(RewriteDriver* rewrite_driver, MessageHandler* message_handler)
+WebscaleMakeScriptsAsync::WebscaleMakeScriptsAsync(RewriteDriver* rewrite_driver)
     : CommonFilter(rewrite_driver) {
   Statistics* statistics = rewrite_driver->statistics();
-  message_handler = driver()->message_handler();
   escaped_urls = ConstructPatternFromCustomUrls(rewrite_driver->options());
 }
 
-WebscaleMakeScriptsAsync::~WebscaleMakeScriptsAsync(){
+WebscaleMakeScriptsAsync::~WebscaleMakeScriptsAsync() {
 }
 
 void WebscaleMakeScriptsAsync::InitStats(Statistics* statistics) {
@@ -41,59 +40,53 @@ void WebscaleMakeScriptsAsync::StartDocumentImpl() {
 
 
 void WebscaleMakeScriptsAsync::StartElementImpl(HtmlElement* element) {
-  message_handler = driver()->message_handler();
+  MessageHandler* message_handler = driver()->message_handler();
 
   // Script element found.
   if (element->keyword() == HtmlName::kScript) {
     const char* src_attribute = element->EscapedAttributeValue(HtmlName::kSrc);
     // Script element has a 'src' attribute.
     if (src_attribute != NULL) {
-      // Convert the src element to a GoogleString format for compatibility.
-      GoogleString* src_string = new GoogleString(src_attribute);
-
       // If there are no custom urls mentioned, print a message and do nothing.
       if (escaped_urls == "") {
-        message_handler->Message(
-          kInfo, "No custom urls provided.");
+        message_handler->Message(kInfo, "No custom urls provided.");
       }
       else {
         // A full match of the custom url needs to be found.
-        bool match = RE2::FullMatch(src_string->c_str(), escaped_urls.c_str());
+        bool match = RE2::FullMatch(src_attribute, escaped_urls.c_str());
         if (match) {
           // If a match is found, add the async attribute.
           driver()->AddAttribute(element, HtmlName::kAsync, "true");
           // Set the debug comment so that it will be displayed when
-          // ModPagespeedEnabledFilters=+debug is used.
+          // ModPagespeedFilters=+debug is used.
           driver()->InsertDebugComment("Webscale added an async attribute successfully", element);
-          message_handler->Message(
-            kInfo, "Adding an async attribute to %s.", src_string->c_str());
+          message_handler->Message(kInfo, "Adding an async attribute to %s.", src_attribute);
         } else {
-            message_handler->Message(
-              kInfo, "Not adding an async attribute to %s.", src_string->c_str());
+            message_handler->Message(kInfo, "Not adding an async attribute to %s.", src_attribute);
         }
       }
     }
   }
 }
 
-// Construct a regular expressions with the custom urls provied. Each custom
+// Construct a regular expression with the custom urls provied. Each custom
 // url will be escaped and an OR of all the escaped urls will be constructed
 // for pattern matching.  Pattern matching is preferred here instead of
-// iterating the list of cusotm urls every time a src attribute is encoutered.
-// This make comparison faster.
+// iterating the list of custom urls every time a src attribute is encountered.
+// This makes comparison faster.
 GoogleString WebscaleMakeScriptsAsync::ConstructPatternFromCustomUrls(const RewriteOptions* options) {
   const int number_of_custom_urls = options->num_custom_async_urls();
+  GoogleString prefix = "";
   GoogleString pattern = "";
 
   if (number_of_custom_urls == 0) {
     return pattern;
   }
   else {
-    for(int i = 0; i < number_of_custom_urls - 1; i++) {
-      pattern += RE2::QuoteMeta(options->custom_async_url(i)->c_str());
-      pattern += '|';
+    for(int i = 0; i < number_of_custom_urls; i++) {
+      pattern += prefix + RE2::QuoteMeta(options->custom_async_url(i)->c_str());
+      prefix = '|';
     }
-    pattern += RE2::QuoteMeta(options->custom_async_url(number_of_custom_urls - 1)->c_str());
     return pattern;
   }
 }

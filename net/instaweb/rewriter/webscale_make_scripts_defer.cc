@@ -22,10 +22,9 @@
 
 namespace net_instaweb {
 
-WebscaleMakeScriptsDefer::WebscaleMakeScriptsDefer(RewriteDriver* rewrite_driver, MessageHandler* message_handler)
+WebscaleMakeScriptsDefer::WebscaleMakeScriptsDefer(RewriteDriver* rewrite_driver)
     : CommonFilter(rewrite_driver) {
   Statistics* statistics = rewrite_driver->statistics();
-  message_handler = driver()->message_handler();
   escaped_urls = ConstructPatternFromCustomUrls(rewrite_driver->options());
 }
 
@@ -41,61 +40,53 @@ void WebscaleMakeScriptsDefer::StartDocumentImpl() {
 
 
 void WebscaleMakeScriptsDefer::StartElementImpl(HtmlElement* element) {
-  message_handler = driver()->message_handler();
+  MessageHandler* message_handler = driver()->message_handler();
 
   // Script element found.
   if (element->keyword() == HtmlName::kScript) {
     const char* src_attribute = element->EscapedAttributeValue(HtmlName::kSrc);
     // Script element has a 'src' attribute.
     if (src_attribute != NULL) {
-      // Convert the src element to a GoogleString format for compatibility.
-      GoogleString* src_string = new GoogleString(src_attribute);
-
       // If there are no custom urls mentioned, print a message and do nothing.
       if (escaped_urls == "") {
-        message_handler->Message(
-          kInfo, "No Urls provided.");
+        message_handler->Message(kInfo, "No custom urls provided.");
       }
       else {
         // A full match of the custom url needs to be found.
-        bool match = RE2::FullMatch(src_string->c_str(), escaped_urls.c_str());
-
+        bool match = RE2::FullMatch(src_attribute, escaped_urls.c_str());
         if (match) {
           // If a match is found, add the defer attribute.
           driver()->AddAttribute(element, HtmlName::kDefer, "true");
           // Set the debug comment so that it will be displayed when
-          // ModPagespeedEnabledFilters=+debug is used.
+          // ModPagespeedFilters=+debug is used.
           driver()->InsertDebugComment("Webscale added a defer attribute successfully", element);
-          message_handler->Message(
-            kInfo, "Adding a defer attribute to %s.", src_string->c_str());
+          message_handler->Message(kInfo, "Adding a defer attribute to %s.", src_attribute);
         } else {
-            message_handler->Message(
-              kInfo, "Not adding a defer attribute to %s.", src_string->c_str());
+            message_handler->Message(kInfo, "Not adding a defer attribute to %s.", src_attribute);
         }
       }
     }
   }
 }
 
-
-// Construct a regular expressions with the custom urls provied. Each custom
+// Construct a regular expression with the custom urls provied. Each custom
 // url will be escaped and an OR of all the escaped urls will be constructed
 // for pattern matching.  Pattern matching is preferred here instead of
-// iterating the list of cusotm urls every time a src attribute is encoutered.
+// iterating the list of custom urls every time a src attribute is encountered.
 // This make comparison faster.
 GoogleString WebscaleMakeScriptsDefer::ConstructPatternFromCustomUrls(const RewriteOptions* options) {
   const int number_of_custom_urls = options->num_custom_defer_urls();
   GoogleString pattern = "";
+  GoogleString prefix = "";
 
   if (number_of_custom_urls == 0) {
     return pattern;
   }
   else {
-    for(int i = 0; i < number_of_custom_urls - 1; i++) {
-      pattern += RE2::QuoteMeta(options->custom_defer_url(i)->c_str());
-      pattern += '|';
+    for(int i = 0; i < number_of_custom_urls; i++) {
+      pattern += prefix + RE2::QuoteMeta(options->custom_defer_url(i)->c_str());
+      prefix = '|';
     }
-      pattern += RE2::QuoteMeta(options->custom_defer_url(number_of_custom_urls - 1)->c_str());
     return pattern;
   }
 }
@@ -107,3 +98,4 @@ void WebscaleMakeScriptsDefer::EndElementImpl(HtmlElement* element) {
 void WebscaleMakeScriptsDefer::EndDocument() {
 }
 
+}

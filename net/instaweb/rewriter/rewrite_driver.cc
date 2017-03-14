@@ -1094,12 +1094,10 @@ void RewriteDriver::AddPreRenderFilters() {
     AppendOwnedPreRenderFilter(new MakeShowAdsAsyncFilter(this));
   }
   if (rewrite_options->Enabled(RewriteOptions::kWebscaleMakeScriptsAsync)) {
-    MessageHandler* handler = message_handler();
-    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsAsync(this, handler));
+    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsAsync(this));
   }
   if (rewrite_options->Enabled(RewriteOptions::kWebscaleMakeScriptsDefer)) {
-    MessageHandler* handler = message_handler();
-    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsDefer(this, handler));
+    AppendOwnedPreRenderFilter(new WebscaleMakeScriptsDefer(this));
   }
   if (rewrite_options->Enabled(RewriteOptions::kSplitHtml) &&
       server_context()->factory()->UseBeaconResultsInFilters()) {
