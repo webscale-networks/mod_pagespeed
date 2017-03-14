@@ -24,7 +24,6 @@ namespace net_instaweb {
 
 WebscaleMakeScriptsDefer::WebscaleMakeScriptsDefer(RewriteDriver* rewrite_driver)
     : CommonFilter(rewrite_driver) {
-  Statistics* statistics = rewrite_driver->statistics();
   escaped_urls = ConstructPatternFromCustomUrls(rewrite_driver->options());
 }
 
