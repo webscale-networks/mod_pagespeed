@@ -1621,6 +1621,8 @@
         'rewriter/resource_tag_scanner.cc',
         'rewriter/rewrite_context.cc',
         'rewriter/rewrite_driver.cc',
+        'rewriter/webscale_make_scripts_async.cc',
+        'rewriter/webscale_make_scripts_defer.cc',  
         'rewriter/rewrite_driver_factory.cc',
         'rewriter/rewrite_driver_pool.cc',
         'rewriter/rewrite_filter.cc',

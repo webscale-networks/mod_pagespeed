@@ -117,6 +117,8 @@ struct FilterMap {
 "strip_image_meta_data",             RewriteOptions::kStripImageMetaData
 "strip_scripts",                     RewriteOptions::kStripScripts
 "trim_urls",                         RewriteOptions::kLeftTrimUrls
+"webscale_make_scripts_async",       RewriteOptions::kWebscaleMakeScriptsAsync
+"webscale_make_scripts_defer",       RewriteOptions::kWebscaleMakeScriptsDefer
 %%
 
 RewriteOptions::Filter RewriteOptions::LookupFilter(
