@@ -25,7 +25,7 @@ namespace net_instaweb {
 WebscaleMakeScriptsAsync::WebscaleMakeScriptsAsync(RewriteDriver* rewrite_driver)
     : CommonFilter(rewrite_driver),
       escaped_urls(ConstructPatternFromCustomUrls(rewrite_driver->options())),
-      RE2 re2(escaped_urls) {
+      re2(escaped_urls) {
 }
 
 WebscaleMakeScriptsAsync::~WebscaleMakeScriptsAsync() {
