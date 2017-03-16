@@ -23,8 +23,9 @@
 namespace net_instaweb {
 
 WebscaleMakeScriptsDefer::WebscaleMakeScriptsDefer(RewriteDriver* rewrite_driver)
-    : CommonFilter(rewrite_driver) {
-  escaped_urls = ConstructPatternFromCustomUrls(rewrite_driver->options());
+    : CommonFilter(rewrite_driver),
+      escaped_urls(ConstructPatternFromCustomUrls(rewrite_driver->options())),
+      RE2 re2(escaped_urls) {
 }
 
 WebscaleMakeScriptsDefer::~WebscaleMakeScriptsDefer(){
@@ -52,7 +53,7 @@ void WebscaleMakeScriptsDefer::StartElementImpl(HtmlElement* element) {
       }
       else {
         // A full match of the custom url needs to be found.
-        bool match = RE2::FullMatch(src_attribute, escaped_urls.c_str());
+        bool match = RE2::FullMatch(src_attribute, re2);
         if (match) {
           // If a match is found, add the defer attribute.
           driver()->AddAttribute(element, HtmlName::kDefer, "true");
