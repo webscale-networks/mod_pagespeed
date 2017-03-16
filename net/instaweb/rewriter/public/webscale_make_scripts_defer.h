@@ -53,6 +53,8 @@ class WebscaleMakeScriptsDefer : public CommonFilter {
     // Example: If the custom urls are ["js/a1.js", "js/a2.js"]
     // escaped_urls will finally be: "js\/a1\\.js|js\\/a2\\.js"
     GoogleString escaped_urls;
+    // Pre-compiled regex
+    RE2 re2;
 
   DISALLOW_COPY_AND_ASSIGN(WebscaleMakeScriptsDefer);
 };
