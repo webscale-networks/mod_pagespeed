@@ -40,7 +40,6 @@ void WebscaleMakeScriptsAsync::StartDocumentImpl() {
 
 
 void WebscaleMakeScriptsAsync::StartElementImpl(HtmlElement* element) {
-  return;
   MessageHandler* message_handler = driver()->message_handler();
 
   // Script element found.
