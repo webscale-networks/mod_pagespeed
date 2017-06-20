@@ -77,15 +77,7 @@ HtmlParse::~HtmlParse() {
 void HtmlParse::AddFilter(HtmlFilter* html_filter) {
   filters_.push_back(html_filter);
 }
-//Lagrange
-void HtmlParse::LG_DeleteWriter(HtmlFilter* html_filter){
-  for (FilterList::iterator it = filters_.begin(); it != filters_.end(); ++it)
-    if ((*it)->Name() == html_filter->Name()){
-      filters_.erase(it);      
-      break;
-    } 
-}
-//Lagrange:end
+
 HtmlEventListIterator HtmlParse::Last() {
   HtmlEventListIterator p = queue_.end();
   --p;

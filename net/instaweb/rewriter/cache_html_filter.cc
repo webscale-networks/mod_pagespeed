@@ -141,9 +141,6 @@ void CacheHtmlFilter::SendCookies() {
   const ResponseHeaders* response_headers = rewrite_driver_->response_headers();
   if (response_headers->GetCookieString(&cookie_str)) {
     WriteString("<script>pagespeed.panelLoader.loadCookies(");
-      // Lagrange: if cookie_str contains "HttpOnly" the whole idea of setting cookie via jave script is ruined
-        GlobalReplaceSubstring("HttpOnly", "", &cookie_str);
-      // Lagrange end
     WriteString(cookie_str);
     WriteString(");</script>");
   }

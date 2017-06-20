@@ -127,7 +127,7 @@ class ApacheServerContext : public SystemServerContext {
   // We do not proxy external HTML from mod_pagespeed in Apache using the
   // ProxyFetch flow.  Currently we must rely on a separate module to
   // let mod_pagespeed behave as an origin fetcher.
-  virtual bool ProxiesHtml() const { return true; }  // Lagrange: was "false"
+  virtual bool ProxiesHtml() const { return false; }
 
   // Creates a request context which is suitable for resolving
   // options, but is not yet suitable for establishing a context from

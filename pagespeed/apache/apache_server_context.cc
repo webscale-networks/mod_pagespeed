@@ -61,7 +61,7 @@ ApacheServerContext::ApacheServerContext(
     ApacheRewriteDriverFactory* factory,
     server_rec* server,
     const StringPiece& version)
-    : SystemServerContext(factory, server->server_hostname, server->addrs ? server->addrs->host_port : server->port),
+    : SystemServerContext(factory, server->server_hostname, server->port),
       apache_factory_(factory),
       server_rec_(server),
       version_(version.data(), version.size()),

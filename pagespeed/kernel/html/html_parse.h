@@ -96,10 +96,6 @@ class HtmlParse {
   // of it.
   void AddFilter(HtmlFilter* filter);
 
-  // Lagrange delete html_writer_filter
-    void LG_DeleteWriter(HtmlFilter* html_filter);
-  // Lagrange end
-
   // Initiate a chunked parsing session.  Finish with FinishParse.  The
   // url is only used to resolve relative URLs; the contents are not
   // directly fetched.  The caller must supply the text and call ParseText.

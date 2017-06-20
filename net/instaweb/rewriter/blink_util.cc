@@ -286,11 +286,7 @@ int GetPanelNumberForNonCacheableElement(
       }
     } else {
       for (Iterator it = ret.first; it != ret.second; ++it) {
-        // Lagrange: replacing exact comparison to substring search
-        // TODO replace with wilcard - should be more precise
-          if (FindIgnoreCase(value, it->second.first) != StringPiece::npos) {
-        //if (value == it->second.first) {
-        //Lagrange end
+        if (value == it->second.first) {
           // Returning the index.
           return it->second.second;
         }

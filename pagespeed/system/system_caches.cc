@@ -51,8 +51,6 @@
 #include "pagespeed/kernel/thread/queued_worker_pool.h"
 #include "pagespeed/kernel/thread/slow_worker.h"
 
-#include "net/instaweb/rewriter/public/blink_util.h" //Lagrange
-
 namespace net_instaweb {
 
 const char SystemCaches::kMemcachedAsync[] = "memcached_async";
@@ -336,12 +334,6 @@ void SystemCaches::SetupPcacheCohorts(ServerContext* server_context,
 
   cohort = server_context->AddCohort(RewriteDriver::kDomCohort, pcache);
   server_context->set_dom_cohort(cohort);
-
-  //Lagrange add blink
-  cohort = server_context->AddCohort(BlinkUtil::kBlinkCohort, pcache);
-  server_context->set_blink_cohort(cohort);
-  //Lagrange end
-
 }
 
 void SystemCaches::SetupCaches(ServerContext* server_context,

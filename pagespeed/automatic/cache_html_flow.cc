@@ -732,30 +732,11 @@ void CacheHtmlFlow::CacheHtmlHit(FallbackPropertyPage* page) {
             options_->experiment_cookie_duration_ms(),
         response_headers);
   }
-
-  response_headers->Add("Lagrange-Cache", "Hit from CloudMaestro"); //Lagrange
-  
   base_fetch_->HeadersComplete();
 
   // Clone the RewriteDriver which is used to rewrite the HTML that we are
   // trying to flush early.
-
-  // Lagrange: this does not work well as we do not strip out non-cacheables when rewrite content from cache.
-     RewriteOptions* options = options_->Clone();
-     options->ClearFilters();
-    // options->ForceEnableFilter(RewriteOptions::kRemoveComments);
-     options->ForceEnableFilter(RewriteOptions::kStripNonCacheable);
-    // options->ForceEnableFilter(RewriteOptions::kComputeVisibleText);
-
-     options->set_enable_blink_html_change_detection(true); //try    
-
-     server_context_->ComputeSignature(options);
-     RewriteDriver* new_driver = server_context_->NewCustomRewriteDriver(options, rewrite_driver_->request_context());
-
-     //new
-     if (server_context_->cache_html_info_finder() == NULL)
-       server_context_->set_cache_html_info_finder(new CacheHtmlInfoFinder());
-  //Lagrange end
+  RewriteDriver* new_driver = rewrite_driver_->Clone();
   new_driver->set_response_headers_ptr(base_fetch_->response_headers());
   new_driver->set_flushing_cached_html(true);
   new_driver->SetWriter(base_fetch_);
