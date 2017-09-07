@@ -34,9 +34,11 @@ namespace net_instaweb {
 namespace {
 
 const char kCodeSeparator = 'x';
-const char kCodeWebpLossy = 'w';               // for decoding legacy URLs.
-const char kCodeWebpLossyLosslessAlpha = 'v';  // for decoding legacy URLs.
-const char kCodeMobileUserAgent = 'm';         // for decoding legacy URLs.
+const char kCodeWebpLossy = 'w';
+const char kCodeWebpLossyLosslessAlpha = 'v';
+const char kCodeSmallScreen = 's';
+const char kCodeSaveData = 'd';
+const char kCodeMobileUserAgent = 'm';
 const char kMissingDimension = 'N';
 
 // Constants for UserAgent cache key entries.
@@ -54,7 +56,9 @@ bool IsValidCode(char code) {
   return ((code == kCodeSeparator) ||
           (code == kCodeWebpLossy) ||
           (code == kCodeWebpLossyLosslessAlpha) ||
-          (code == kCodeMobileUserAgent));
+          (code == kCodeMobileUserAgent) ||
+          (code == kCodeSmallScreen) ||
+          (code == kCodeSaveData));
 }
 
 // Decodes a single dimension (either N or an integer), removing it from *in and
@@ -110,7 +114,27 @@ void ImageUrlEncoder::Encode(const StringVector& urls,
                   StringPiece(&kMissingDimension, 1));
       }
     }
-    rewritten_url->push_back(kCodeSeparator);
+
+    if (data->may_use_small_screen_quality()) {
+      rewritten_url->push_back(kCodeSmallScreen);
+    }
+    if (data->may_use_save_data_quality()) {
+      rewritten_url->push_back(kCodeSaveData);
+    }
+    if (data->mobile_user_agent()) {
+      rewritten_url->push_back(kCodeMobileUserAgent);
+    }
+    switch (data->libwebp_level()) {
+      case ResourceContext::LIBWEBP_LOSSY_ONLY:
+        rewritten_url->push_back(kCodeWebpLossy);
+        break;
+      case ResourceContext::LIBWEBP_LOSSY_LOSSLESS_ALPHA:
+        rewritten_url->push_back(kCodeWebpLossyLosslessAlpha);
+        break;
+      default:
+        rewritten_url->push_back(kCodeSeparator);
+        break;
+    }
   }
 
   UrlEscaper::EncodeToUrlSegment(urls[0], rewritten_url);
@@ -186,6 +210,24 @@ bool ImageUrlEncoder::Decode(const StringPiece& encoded,
   }
   // Remove the terminator
   remaining.remove_prefix(1);
+
+  if (terminator == kCodeSmallScreen) {
+    data->set_may_use_small_screen_quality(true);
+    if (remaining.empty()) {
+      return false;
+    }
+    terminator = remaining[0];
+    remaining.remove_prefix(1);
+  }
+
+  if (terminator == kCodeSaveData) {
+    data->set_may_use_save_data_quality(true);
+    if (remaining.empty()) {
+      return false;
+    }
+    terminator = remaining[0];
+    remaining.remove_prefix(1);
+  }
 
   // Set mobile user agent & set webp only if its a legacy encoding.
   if (terminator == kCodeMobileUserAgent) {
