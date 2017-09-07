@@ -115,15 +115,23 @@ void ImageUrlEncoder::Encode(const StringVector& urls,
       }
     }
 
-    if (data->may_use_small_screen_quality()) {
-      rewritten_url->push_back(kCodeSmallScreen);
-    }
-    if (data->may_use_save_data_quality()) {
-      rewritten_url->push_back(kCodeSaveData);
-    }
+    // Migration steps:
+    //   Existing servers know how to decode everything but the following two
+    //   symbols: small-screen and save-data.  So commit the full decoding code
+    //   first, then upgrade all existing servers, then restore the following
+    //   encoding steps, then upgrade all servers again.
+
+    // if (data->may_use_small_screen_quality()) {
+    //   rewritten_url->push_back(kCodeSmallScreen);
+    // }
+    // if (data->may_use_save_data_quality()) {
+    //   rewritten_url->push_back(kCodeSaveData);
+    // }
+
     if (data->mobile_user_agent()) {
       rewritten_url->push_back(kCodeMobileUserAgent);
     }
+
     switch (data->libwebp_level()) {
       case ResourceContext::LIBWEBP_LOSSY_ONLY:
         rewritten_url->push_back(kCodeWebpLossy);
