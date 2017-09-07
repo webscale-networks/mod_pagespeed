@@ -197,6 +197,8 @@ class RewriteOptions {
     kStripImageMetaData,
     kStripNonCacheable,
     kStripScripts,
+    kWebscaleMakeScriptsAsync,
+    kWebscaleMakeScriptsDefer,
     kEndOfFilters
   };
 
@@ -435,6 +437,8 @@ class RewriteOptions {
   static const char kCacheFlushFilename[];
   static const char kCacheFlushPollIntervalSec[];
   static const char kCompressMetadataCache[];
+  static const char kCustomAsyncUrl[];
+  static const char kCustomDeferUrl[];
   static const char kFetcherProxy[];
   static const char kFetchFromModSpdy[];
   static const char kFetchHttps[];
@@ -1151,6 +1155,26 @@ class RewriteOptions {
 
   int num_custom_fetch_headers() const {
     return custom_fetch_headers_.size();
+  }
+
+  void AddCustomAsyncUrl(const StringPiece& name);
+
+  const GoogleString* custom_async_url(int i) const {
+    return (new GoogleString(custom_async_urls_[i]->data(), custom_async_urls_[i]->size()));
+  }
+
+  int num_custom_async_urls() const {
+    return custom_async_urls_.size();
+  }
+
+  void AddCustomDeferUrl(const StringPiece& name);
+
+  const GoogleString* custom_defer_url(int i) const {
+    return (new GoogleString(custom_defer_urls_[i]->data(), custom_defer_urls_[i]->size()));
+  }
+
+  int num_custom_defer_urls() const {
+    return custom_defer_urls_.size();
   }
 
   // Returns the spec with the id_ that matches id.  Returns NULL if no
@@ -4333,6 +4357,9 @@ class RewriteOptions {
 
   // Headers to add to subresource requests.
   std::vector<NameValue*> custom_fetch_headers_;
+
+  std::vector<GoogleString*> custom_async_urls_;
+  std::vector<GoogleString*> custom_defer_urls_;
 
   // If this is non-NULL it tells us additional attributes that should be
   // interpreted as containing urls.

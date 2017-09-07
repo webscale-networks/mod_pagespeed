@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "net/instaweb/rewriter/public/domain_lawyer.h"
@@ -63,6 +65,8 @@ const char RewriteOptions::kAllowOptionsToBeSetByCookies[] =
 const char RewriteOptions::kAlwaysMobilize[] = "AlwaysMobilize";
 const char RewriteOptions::kAlwaysRewriteCss[] = "AlwaysRewriteCss";
 const char RewriteOptions::kAnalyticsID[] = "AnalyticsID";
+const char RewriteOptions::kCustomAsyncUrl[] = "CustomAsyncUrl";
+const char RewriteOptions::kCustomDeferUrl[] = "CustomDeferUrl";
 const char RewriteOptions::kAvoidRenamingIntrospectiveJavascript[] =
     "AvoidRenamingIntrospectiveJavascript";
 const char RewriteOptions::kAwaitPcacheLookup[] = "AwaitPcacheLookup";
@@ -905,6 +909,8 @@ const RewriteOptions::FilterEnumToIdAndNameEntry
         {RewriteOptions::kStripImageMetaData, "md", "Strip Image Meta Data"},
         {RewriteOptions::kStripNonCacheable, "nc", "Strip Non Cacheable"},
         {RewriteOptions::kStripScripts, "ss", "Strip Scripts"},
+        {RewriteOptions::kWebscaleMakeScriptsAsync, "wmsa", "Add Async To Scripts"},
+        {RewriteOptions::kWebscaleMakeScriptsDefer, "wmsd", "Add Defer To Scripts"},
 };
 
 const RewriteOptions::Filter kImagePreserveUrlDisabledFilters[] = {
@@ -2500,6 +2506,8 @@ void RewriteOptions::AddProperties() {
 
 RewriteOptions::~RewriteOptions() {
   STLDeleteElements(&custom_fetch_headers_);
+  STLDeleteElements(&custom_async_urls_);
+  STLDeleteElements(&custom_defer_urls_);
   STLDeleteElements(&experiment_specs_);
   STLDeleteElements(&url_cache_invalidation_entries_);
   STLDeleteValues(&rejected_request_map_);
@@ -3342,6 +3350,8 @@ RewriteOptions::ParseAndSetOptionFromNameWithScope(
     RetainComment(arg);
   } else if (StringCaseEqual(name, kBlockingRewriteRefererUrls)) {
     EnableBlockingRewriteForRefererUrlPattern(arg);
+  } else if (StringCaseEqual(name, kCustomAsyncUrl)) {
+    AddCustomAsyncUrl(arg);
   } else {
     result = RewriteOptions::kOptionNameUnknown;
   }
@@ -3850,6 +3860,16 @@ void RewriteOptions::Merge(const RewriteOptions& src) {
   for (int i = 0, n = src.custom_fetch_headers_.size(); i < n; ++i) {
     NameValue* nv = src.custom_fetch_headers_[i];
     AddCustomFetchHeader(nv->name, nv->value);
+  }
+
+  for (int i = 0, n = src.custom_async_urls_.size(); i < n; ++i) {
+    GoogleString* nv = src.custom_async_urls_[i];
+    AddCustomAsyncUrl(nv->c_str());
+  }
+
+  for (int i = 0, n = src.custom_defer_urls_.size(); i < n; ++i) {
+    GoogleString* nv = src.custom_defer_urls_[i];
+    AddCustomDeferUrl(nv->c_str());
   }
 
   for (int i = 0, n = src.num_url_valued_attributes(); i < n; ++i) {
@@ -4578,6 +4598,16 @@ bool RewriteOptions::MergeOK() const {
 void RewriteOptions::AddCustomFetchHeader(const StringPiece& name,
                                           const StringPiece& value) {
   custom_fetch_headers_.push_back(new NameValue(name, value));
+}
+
+void RewriteOptions::AddCustomAsyncUrl(const StringPiece& value) {
+  Modify();
+  custom_async_urls_.push_back(new GoogleString(value.data(), value.size()));
+}
+
+void RewriteOptions::AddCustomDeferUrl(const StringPiece& value) {
+  Modify();
+  custom_defer_urls_.push_back(new GoogleString(value.data(), value.size()));
 }
 
 // We expect experiment_specs_.size() to be small (not more than 2 or 3)
