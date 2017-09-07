@@ -117,18 +117,12 @@ void ImageUrlEncoder::Encode(const StringVector& urls,
       }
     }
 
-    // Migration steps:
-    //   Existing servers know how to decode everything but the following two
-    //   symbols: small-screen and save-data.  So commit the full decoding code
-    //   first, then upgrade all existing servers, then restore the following
-    //   encoding steps, then upgrade all servers again.
-
-    // if (data->may_use_small_screen_quality()) {
-    //   rewritten_url->push_back(kCodeSmallScreen);
-    // }
-    // if (data->may_use_save_data_quality()) {
-    //   rewritten_url->push_back(kCodeSaveData);
-    // }
+    if (data->may_use_small_screen_quality()) {
+      rewritten_url->push_back(kCodeSmallScreen);
+    }
+    if (data->may_use_save_data_quality()) {
+      rewritten_url->push_back(kCodeSaveData);
+    }
 
     if (data->mobile_user_agent()) {
       rewritten_url->push_back(kCodeMobileUserAgent);
@@ -142,10 +136,7 @@ void ImageUrlEncoder::Encode(const StringVector& urls,
         rewritten_url->push_back(kCodeWebpLossyLosslessAlpha);
         break;
       case ResourceContext::LIBWEBP_ANIMATED:
-        // TODO(aroman) Change this back to kCodeWebpAnimated after servers are
-        // updated. This is temporary until all servers support decoding
-        // kCodeWebpAnimated.
-        rewritten_url->push_back(kCodeWebpLossyLosslessAlpha);
+        rewritten_url->push_back(kCodeWebpAnimated);
         break;
       default:
         rewritten_url->push_back(kCodeSeparator);
@@ -301,8 +292,7 @@ void ImageUrlEncoder::SetLibWebpLevel(
   if (request_properties.SupportsWebpAnimated() &&
       (options.Enabled(RewriteOptions::kRecompressWebp) ||
        options.Enabled(RewriteOptions::kConvertToWebpAnimated))) {
-    // TODO(aroman) Change this back to LIBWEBP_ANIMATED after servers are updated.
-    libwebp_level = ResourceContext::LIBWEBP_LOSSY_LOSSLESS_ALPHA;
+    libwebp_level = ResourceContext::LIBWEBP_ANIMATED;
   } else if (request_properties.SupportsWebpLosslessAlpha() &&
              (options.Enabled(RewriteOptions::kRecompressWebp) ||
               options.Enabled(RewriteOptions::kConvertToWebpLossless))) {
