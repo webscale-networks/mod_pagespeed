@@ -446,6 +446,23 @@ InstawebContext* build_context_for_request(request_rec* request) {
     return NULL;
   }
 
+  // Lagrange start
+  if (apr_table_get(request->notes, "Lagrange-Cache")){
+     apr_table_setn(request->headers_out, "Lagrange-Cache", apr_table_get(request->notes, "Lagrange-Cache"));
+   }
+
+  //  We don't want to rewrite HTML response if it was handled by partial cache html flow
+  if (apr_table_get(request->notes, "LG_partial_html")){
+    if (!apr_table_get(request->headers_out, "Lagrange-Cache")){
+      apr_table_setn(request->headers_out, "Lagrange-Cache", "HTML CACHE MISS");
+    }
+    ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_SUCCESS, request,
+                  "Request not rewritten because: "
+                  "Response handled by Lagrange partial cache flow.");
+    return NULL; 
+  }
+  // Lagrange end
+
   InstawebHandler instaweb_handler(request);
   const RewriteOptions* options = instaweb_handler.options();
   instaweb_handler.SetupSpdyConnectionIfNeeded();

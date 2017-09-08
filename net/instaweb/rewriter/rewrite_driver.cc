@@ -1487,7 +1487,16 @@ void RewriteDriver::RegisterRewriteFilter(RewriteFilter* filter) {
 
 void RewriteDriver::SetWriter(Writer* writer) {
   writer_ = writer;
-  if (html_writer_filter_ == NULL) {
+ 
+ // Lagrange: here we have a chance to adjust an html_writer_filter
+ // so we want first to remove it and then add a new one  
+  if (html_writer_filter_ != NULL){ 
+    HtmlParse::LG_DeleteWriter(html_writer_filter_.get());
+    html_writer_filter_.reset(NULL);
+  }
+  //Lagrange end 
+ 
+  //if (html_writer_filter_ == NULL) {  // Lagrange 
     if (options()->Enabled(RewriteOptions::kCachePartialHtml) &&
                flushed_cached_html_) {
       html_writer_filter_.reset(new CacheHtmlFilter(this));
@@ -1507,7 +1516,7 @@ void RewriteDriver::SetWriter(Writer* writer) {
     if (options()->Enabled(RewriteOptions::kHtmlWriterFilter)) {
       HtmlParse::AddFilter(html_writer_filter_.get());
     }
-  }
+  //} // Lagrange
 
   html_writer_filter_->set_writer(writer);
 }
