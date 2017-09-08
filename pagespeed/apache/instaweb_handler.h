@@ -138,6 +138,10 @@ class InstawebHandler {
   // authorized.
   bool AuthenticateProxy();
 
+  // Lagrange
+  bool LG_HandleAsPartialHtml(request_rec* request);
+  // Lagrange end
+
   RequestHeaders* ReleaseRequestHeaders() { return request_headers_.release(); }
 
   // Returns the options, whether they were custom-computed due to htaccess
