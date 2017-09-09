@@ -36,6 +36,7 @@ namespace {
 const char kCodeSeparator = 'x';
 const char kCodeWebpLossy = 'w';
 const char kCodeWebpLossyLosslessAlpha = 'v';
+const char kCodeWebpAnimated = 'a';
 const char kCodeSmallScreen = 's';
 const char kCodeSaveData = 'd';
 const char kCodeMobileUserAgent = 'm';
@@ -56,6 +57,7 @@ bool IsValidCode(char code) {
   return ((code == kCodeSeparator) ||
           (code == kCodeWebpLossy) ||
           (code == kCodeWebpLossyLosslessAlpha) ||
+          (code == kCodeWebpAnimated) ||
           (code == kCodeMobileUserAgent) ||
           (code == kCodeSmallScreen) ||
           (code == kCodeSaveData));
@@ -137,6 +139,12 @@ void ImageUrlEncoder::Encode(const StringVector& urls,
         rewritten_url->push_back(kCodeWebpLossy);
         break;
       case ResourceContext::LIBWEBP_LOSSY_LOSSLESS_ALPHA:
+        rewritten_url->push_back(kCodeWebpLossyLosslessAlpha);
+        break;
+      case ResourceContext::LIBWEBP_ANIMATED:
+        // TODO(aroman) Change this back to kCodeWebpAnimated after servers are
+        // updated. This is temporary until all servers support decoding
+        // kCodeWebpAnimated.
         rewritten_url->push_back(kCodeWebpLossyLosslessAlpha);
         break;
       default:
@@ -250,6 +258,7 @@ bool ImageUrlEncoder::Decode(const StringPiece& encoded,
     terminator = remaining[0];
     if (terminator != kCodeWebpLossy &&
         terminator != kCodeWebpLossyLosslessAlpha &&
+        terminator != kCodeWebpAnimated &&
         terminator != kCodeSeparator) {
       return false;
     }
@@ -269,6 +278,8 @@ bool ImageUrlEncoder::Decode(const StringPiece& encoded,
     data->set_libwebp_level(ResourceContext::LIBWEBP_LOSSY_ONLY);
   } else if (terminator == kCodeWebpLossyLosslessAlpha) {
     data->set_libwebp_level(ResourceContext::LIBWEBP_LOSSY_LOSSLESS_ALPHA);
+  } else if (terminator == kCodeWebpAnimated) {
+    data->set_libwebp_level(ResourceContext::LIBWEBP_ANIMATED);
   }
 
   GoogleString* url = StringVectorAdd(urls);
@@ -290,7 +301,8 @@ void ImageUrlEncoder::SetLibWebpLevel(
   if (request_properties.SupportsWebpAnimated() &&
       (options.Enabled(RewriteOptions::kRecompressWebp) ||
        options.Enabled(RewriteOptions::kConvertToWebpAnimated))) {
-    libwebp_level = ResourceContext::LIBWEBP_ANIMATED;
+    // TODO(aroman) Change this back to LIBWEBP_ANIMATED after servers are updated.
+    libwebp_level = ResourceContext::LIBWEBP_LOSSY_LOSSLESS_ALPHA;
   } else if (request_properties.SupportsWebpLosslessAlpha() &&
              (options.Enabled(RewriteOptions::kRecompressWebp) ||
               options.Enabled(RewriteOptions::kConvertToWebpLossless))) {
