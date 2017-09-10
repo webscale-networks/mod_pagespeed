@@ -10,7 +10,7 @@ if ! test -f "$WORKSPACE/mod_pagespeed/src/build.sh" -a -f "$WORKSPACE/mod_pages
   printf "Something is wrong with the workspace\n" >&2
   exit 1
 fi
-    
+
 # BRANCH_NAME is set by jenkins to the name of the branch or tag being built.
 if [ -z "$BRANCH_NAME" ]; then
   printf "BRANCH_NAME must be set\n" >&2
@@ -21,16 +21,14 @@ fi
 SPEC=$(basename $BRANCH_NAME)
 echo "Building from $BRANCH_NAME"
 
+BUILDTYPE=Release
 SVN_OUT="svn+ssh://svn.webscalenetworks.com/repo/pagespeed/$SPEC"
 if [ "${BRANCH_NAME/tags\//}" != "${BRANCH_NAME}" ]; then
   # Build for release when tagged
-  BUILDTYPE=Release
   if svn info "$SVN_OUT" >/dev/null 2>&1; then
     printf "Pagespeed %s already built. Tag another version.\n" "$SPEC" >&2
     exit 1
   fi
-else
-  BUILDTYPE=Debug
 fi
 
 WORKSPACE=$PWD
