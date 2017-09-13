@@ -3155,6 +3155,8 @@ RewriteOptions::ParseAndSetOptionFromNameWithScope(
     AddCssCombiningWildcard(arg);
   } else if (StringCaseEqual(name, kCustomAsyncUrl)) {
     AddCustomAsyncUrl(arg);
+  } else if (StringCaseEqual(name, kCustomDeferUrl)) {
+    AddCustomDeferUrl(arg);
   } else {
     result = RewriteOptions::kOptionNameUnknown;
   }
