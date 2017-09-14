@@ -6,6 +6,17 @@
  * https://jenkins.webscalenetworks.com/job/product/job/control/pipeline-syntax/globals.
  */
 
+/*
+ * Compute an environment from a set of properties in a map. This is
+ * a separate function because it has to be annotated as non-cps in
+ * order to be able to use the standard groovy collect method. Not
+ * sure why.
+ */
+@com.cloudbees.groovy.cps.NonCPS
+def environment(props) {
+  props.collect{ k, v -> k + '=' + v }
+}
+
 node {
   /* Checks out the main source tree */
   stage('scm') {
@@ -16,7 +27,20 @@ node {
     }
   }
 
-  stage('build') {
-    sh('mod_pagespeed/src/build.sh')
+  dir('mod_pagespeed/src') {
+    sh('./compute-version ' + env.BRANCH_NAME)
+  }
+
+  /* Read the build properties written by compute version. */
+  withEnv(environment(readProperties(file: 'build.properties'))) {
+    echo('Building ' + env.PRODUCT_VERSION + ' based on ' + env.PAGESPEED_VERSION)
+    currentBuild.displayName = env.PRODUCT_VERSION
+    currentBuild.description = sh(
+      returnStdout: true,
+      script: 'cd mod_pagespeed/src; git log "--pretty=format:%s (%an)" -1'
+    )
+    stage('build') {
+      sh('mod_pagespeed/src/build.sh ' + env.PRODUCT_VERSION + ' ' + env.BUILDTYPE + ' ' + env.REVISION)
+    }
   }
 }
