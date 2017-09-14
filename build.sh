@@ -10,7 +10,7 @@ REVISION=$3
 if [ -z "$WORKSPACE" ]; then
   WORKSPACE=$PWD
 fi
-if ! test -f "$WORKSPACE/mod_pagespeed/src/build.sh" -a -f "$WORKSPACE/mod_pagespeed/src/install/Makefile"; then
+if ! test -f "$WORKSPACE/mod_pagespeed/build.sh" -a -f "$WORKSPACE/mod_pagespeed/install/Makefile"; then
   printf "Something is wrong with the workspace\n" >&2
   exit 1
 fi
@@ -41,28 +41,15 @@ fi
 
 WORKSPACE=$PWD
 
-if [ ! -d depot_tools ]; then
-  git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-  cd depot_tools
-  git checkout --quiet --force c20f470011e2ea4d81527976f3bded2c13e258af
-  cd ..
-fi
-export DEPOT_TOOLS_UPDATE=0
-export PATH=$PWD/depot_tools:$PATH
-
 cd mod_pagespeed
-gclient config https://github.com/webscale-networks/mod_pagespeed.git --unmanaged --name=src
-gclient sync --force --jobs=1
+python build/gyp_chromium --depth=.
 
 if [ -n "$REVISION" ]; then
-  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$REVISION/" src/build/lastchange.sh
+  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$REVISION/" build/lastchange.sh
 fi
 
-cd src
 cat <<EOF >rebuild
 make --jobs=4 \
-  AR.host=$PWD/build/wrappers/ar.sh \
-  AR.target=$PWD/build/wrappers/ar.sh \
   BUILDTYPE=$BUILDTYPE \
   all \
   mod_pagespeed_test \
@@ -83,21 +70,21 @@ export APACHE_MODULES=$APACHE_ROOT/modules
 export APACHE_CONTROL_PROGRAM=$APACHE_ROOT/modules
 export APACHE_DOC_ROOT=$(mktemp -d)
 export APACHE_USER=$(id -un)
-export APACHE_CONF_D=$APACHE_ROOT/conf
+export APACHE_CONF_DIR=$APACHE_ROOT/conf
 export BINDIR=$DESTDIR/usr/local/bin
 export STAGING_DIR=$WORKSPACE/mod_pagespeed.install
 export MOD_PAGESPEED_CACHE=$DESTDIR/var/cache/mod_pagespeed
 export MOD_PAGESPEED_LOG=$DESTDIR/var/log/pagespeed
 
-mkdir -p "$APACHE_MODULES" "$APACHE_CONF_D" "$BINDIR"
+mkdir -p "$APACHE_MODULES" "$APACHE_CONF_DIR" "$BINDIR"
 
 # The debug config is included by default, but contains a bunch of stuff we do not want
 # The makefile defaults to using the Release build, but we may want to override this
 sed -e 's/debug.conf.template *$//' -e "s/Release/$BUILDTYPE/g" \
-  <mod_pagespeed/src/install/Makefile \
-  >mod_pagespeed/src/install/Makefile.lagrange
+  <mod_pagespeed/install/Makefile \
+  >mod_pagespeed/install/Makefile.lagrange
 BUILDTYPE=$BUILDTYPE \
-make -C mod_pagespeed/src/install \
+make -C mod_pagespeed/install \
   -e \
   -f Makefile.lagrange \
   staging install

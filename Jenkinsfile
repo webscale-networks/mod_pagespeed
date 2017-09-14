@@ -22,12 +22,12 @@ node {
   stage('scm') {
     /* Delete the entire directory first. */
     deleteDir()
-    dir('mod_pagespeed/src') {
+    dir('mod_pagespeed') {
       checkout(scm)
     }
   }
 
-  dir('mod_pagespeed/src') {
+  dir('mod_pagespeed') {
     sh('./compute-version ' + env.BRANCH_NAME)
   }
 
@@ -37,10 +37,10 @@ node {
     currentBuild.displayName = env.PRODUCT_VERSION
     currentBuild.description = sh(
       returnStdout: true,
-      script: 'cd mod_pagespeed/src; git log "--pretty=format:%s (%an)" -1'
+      script: 'cd mod_pagespeed; git log "--pretty=format:%s (%an)" -1'
     )
     stage('build') {
-      sh('mod_pagespeed/src/build.sh ' + env.PRODUCT_VERSION + ' ' + env.BUILDTYPE + ' ' + env.REVISION)
+      sh('mod_pagespeed/build.sh ' + env.PRODUCT_VERSION + ' ' + env.BUILDTYPE + ' ' + env.REVISION)
     }
   }
 }
