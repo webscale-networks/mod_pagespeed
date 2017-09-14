@@ -57,6 +57,7 @@ void WebscaleMakeScriptsDefer::StartElementImpl(HtmlElement* element) {
         if (match) {
           // If a match is found, add the defer attribute.
           driver()->AddAttribute(element, HtmlName::kDefer, "true");
+          element->DeleteAttribute(HtmlName::kAsync);
           // Set the debug comment so that it will be displayed when
           // ModPagespeedFilters=+debug is used.
           driver()->InsertDebugComment("Webscale added a defer attribute successfully", element);
