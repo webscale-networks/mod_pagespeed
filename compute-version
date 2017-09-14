@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# Computes and possibly tags the version number to be used for the webscale
+# pagespeed build and writes relevant variables to a build.properties file.
+# The variables written are:
+#
+#  PRODUCT_VERSION:: The version of the product being built.
+#  BUILDTYPE:: The build type, either Release or Debug
+#  PAGESPEED_VESION:: The version of pagespeed derived from its source code
+#  LASTCHANGE:: The value to use for the pagespeed build last
+#
+# When the build is successful, the build product will be committed to an svn
+# repo so that it can be used by control builds. These are stored in a subdir
+# of /pagespeed, where the subdirectory is determined by the following process:
+#
+# Take the pagespeed version from net/instaweb/public/VERSION and construct the
+# pagespeed version being built from that, adding a prefix of webscale-.  For
+# example, webscale-1.11.33.5.  This is the release branch name expected to be
+# used for releases based on that version of pagespeed.  If the current branch
+# name matches the release branch name, then we are making a release build.
+# Otherwise, we are making a dev build.
+#
+# For a dev build: the build product will be put into the build product repo
+# (svn) using the same name as the branch. For example, /pagespeed/webscale-7
+# where 7 is typically an issue number. If the version is rebuilt, then any
+# previous build product at that directory is deleted before it is re-added.
+#
+# For a release build: the tag referencing the tip of the branch is determined,
+# and expected to be of the form _branch name_-_n_, with _n_ an integer greater
+# than 1. Then a new tag is created with the name of _branch name_-_n+1_. If
+# the tag has already been created, then this step will be bypassed.
+
+BRANCH_NAME=$1
+
+PAGESPEED_VERSION=$(. net/instaweb/public/VERSION &&
+   echo $MAJOR.$MINOR.$BUILD.$PATCH)
+RELEASE_BRANCH=webscale-$PAGESPEED_VERSION
+if [ "$BRANCH_NAME" = "$RELEASE_BRANCH" ]; then
+  git fetch --tags
+  PRODUCT_VERSION=$(git describe --tags --abbrev=0 --exact-match remotes/origin/$BRANCH_NAME 2>/dev/null)
+  if [ -n "$PRODUCT_VERSION" ]; then
+    # A tag points to the tip of this branch already. Do not create another
+    # one, as this is just an indicator that the previous tag build failed.
+    REVISION=${PRODUCT_VERSION#$BRANCHE_NAME-}
+  else
+    # The head is not tagged, create a new tag
+    LAST_TAG=$(git describe --tags --abbrev=0 remotes/origin/$BRANCH_NAME 2>/dev/null)
+    REVISION=${LAST_TAG#$BRANCH_NAME-}
+    if [ "$REVISION" = "$LAST_TAG" ]; then
+      # Starting a new sequence of tags
+      REVISION=1
+    else
+      REVISION=$((REVISION+1))
+    fi
+    PRODUCT_VERSION="$BRANCH_NAME-$REVISION"
+    git tag $PRODUCT_VERSION remotes/origin/$BRANCH_NAME
+    git push --tags
+  fi
+  BUILDTYPE=Release
+  LASTCHANGE="${REVISION}w"
+else
+  PRODUCT_VERSION="$BRANCH_NAME"
+  BUILDTYPE=Debug
+  LASTCHANGE="$BUILD_NUMBER-$BRANCH_NAME"
+fi
+
+printf "PRODUCT_VERSION='%s'\nBUILDTYPE='%s'\nPAGESPEED_VERSION='%s'\nLASTCHANGE='%s'\n" \
+  "$PRODUCT_VERSION" "$BUILDTYPE" "$PAGESPEED_VERSION" "$LASTCHANGE" \
+  >$WORKSPACE/build.properties

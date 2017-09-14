@@ -3,6 +3,10 @@
 set -e
 set -x
 
+PRODUCT_VERSION=$1
+BUILDTYPE=$2
+REVISION=$3
+
 if [ -z "$WORKSPACE" ]; then
   WORKSPACE=$PWD
 fi
@@ -17,16 +21,20 @@ if [ -z "$BRANCH_NAME" ]; then
   exit 1
 fi
 
+if [ -z "$PRODUCT_VERSION" ]; then
+  printf "PRODUCT_VERSION must be set\n" >&2
+  exit 1
+fi
 
-SPEC=$(basename $BRANCH_NAME)
-echo "Building from $BRANCH_NAME"
+if [ -z "$BUILDTYPE" ]; then
+  printf "BUILDTYPE must be set\n" >&2
+  exit 1
+fi
 
-BUILDTYPE=Release
-SVN_OUT="svn+ssh://svn.webscalenetworks.com/repo/pagespeed/$SPEC"
-if [ "${BRANCH_NAME/tags\//}" != "${BRANCH_NAME}" ]; then
-  # Build for release when tagged
+SVN_OUT="file:///repo/pagespeed/$PRODUCT_VERSION"
+if [ "$BUILDTYPE" = "Release" ]; then
   if svn info "$SVN_OUT" >/dev/null 2>&1; then
-    printf "Pagespeed %s already built. Tag another version.\n" "$SPEC" >&2
+    printf "Pagespeed %s already built. Tag another version.\n" "$PRODUCT_VERSION" >&2
     exit 1
   fi
 fi
@@ -45,6 +53,10 @@ export PATH=$PWD/depot_tools:$PATH
 cd mod_pagespeed
 gclient config https://github.com/webscale-networks/mod_pagespeed.git --unmanaged --name=src
 gclient sync --force --jobs=1
+
+if [ -n "$REVISION" ]; then
+  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$REVISION/" src/build/lastchange.sh
+fi
 
 cd src
 cat <<EOF >rebuild
@@ -97,19 +109,8 @@ sed -i -e "s@$DESTDIR@@g" $DESTDIR/usr/local/httpd-lg/conf/pagespeed.conf
 
 rm -rf "$APACHE_DOC_ROOT"
 
-if [ -z "$PAGESPEED_VERSION" ]; then
-  PAGESPEED_VERSION=$(grep '#define MOD_PAGESPEED_VERSION_STRING' \
-    mod_pagespeed/src/out/$BUILDTYPE/obj/gen/net/instaweb/public/version.h |
-    awk '{print $3}' | tr -d '"')
-fi
-printf "pagespeed version is %s\n" "$PAGESPEED_VERSION"
-
-if [ -z "$SPEC" ]; then
-  exit 0
-fi
-
 cd "$DESTDIR"
 if svn info "$SVN_OUT" >/dev/null 2>&1; then
-  svn delete "$SVN_OUT" -m "Delete for replacement with $PAGESPEED_VERSION"
+  svn delete "$SVN_OUT" -m "Delete for replacement from $BRANCH_NAME"
 fi
-svn import --no-ignore --quiet . $SVN_OUT -m "Update pagespeed/$SPEC to version $PAGESPEED_VERSION"
+svn import --no-ignore --quiet . $SVN_OUT -m "Update pagespeed/$PRODUCT_VERSION from $BRANCH_NAME"
