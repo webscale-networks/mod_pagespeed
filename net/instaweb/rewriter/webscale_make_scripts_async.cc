@@ -57,6 +57,7 @@ void WebscaleMakeScriptsAsync::StartElementImpl(HtmlElement* element) {
         if (match) {
           // If a match is found, add the async attribute.
           driver()->AddAttribute(element, HtmlName::kAsync, "true");
+          element->DeleteAttribute(HtmlName::kDefer);
           // Set the debug comment so that it will be displayed when
           // ModPagespeedFilters=+debug is used.
           driver()->InsertDebugComment("Webscale added an async attribute successfully", element);
