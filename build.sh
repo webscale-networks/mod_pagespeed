@@ -54,8 +54,8 @@ cd mod_pagespeed
 gclient config https://github.com/webscale-networks/mod_pagespeed.git --unmanaged --name=src
 gclient sync --force --jobs=1
 
-if [ -n "$REVISION" ]; then
-  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$REVISION/" src/build/lastchange.sh
+if [ -n "$LASTCHANGE" ]; then
+  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$LASTCHANGE/" src/build/lastchange.sh
 fi
 
 cd src
