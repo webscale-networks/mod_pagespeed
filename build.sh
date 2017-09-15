@@ -5,7 +5,7 @@ set -x
 
 PRODUCT_VERSION=$1
 BUILDTYPE=$2
-REVISION=$3
+LASTCHANGE=$3
 
 if [ -z "$WORKSPACE" ]; then
   WORKSPACE=$PWD
@@ -44,8 +44,8 @@ WORKSPACE=$PWD
 cd mod_pagespeed
 python build/gyp_chromium --depth=.
 
-if [ -n "$REVISION" ]; then
-  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$REVISION/" build/lastchange.sh
+if [ -n "$LASTCHANGE" ]; then
+  sed -i.orig -Ee "s/LASTCHANGE=[^ ]+/LASTCHANGE=$LASTCHANGE/" build/lastchange.sh
 fi
 
 cat <<EOF >rebuild
