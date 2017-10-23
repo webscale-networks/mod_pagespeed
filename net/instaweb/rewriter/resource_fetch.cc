@@ -20,6 +20,7 @@
 
 #include "base/logging.h"
 #include "net/instaweb/http/public/async_fetch.h"
+#include "net/instaweb/http/public/fetch_race.h"
 #include "net/instaweb/http/public/request_context.h"
 #include "net/instaweb/http/public/sync_fetcher_adapter_callback.h"
 #include "net/instaweb/public/global_constants.h"
@@ -104,41 +105,60 @@ bool ResourceFetch::BlockingFetch(const GoogleUrl& url,
                                   ServerContext* server_context,
                                   RewriteDriver* driver,
                                   SyncFetcherAdapterCallback* callback) {
-  // Here, we do not want the driver to be cleaned up by the ResourceFetch
-  // since we will be calling BoundedWaitFor on it!
+  int64 start = server_context->timer()->NowMs();
+  MessageHandler* message_handler = server_context->message_handler();
+  FetchRace race(callback, server_context->thread_system(), message_handler);
+
+  // Don't auto-cleanup the driver since we use driver->options and
+  // driver->DecodeUrl below. In some cases, the driver will be done (and
+  // cleaned) before this next call even returns.
   StartWithDriver(url, kDontAutoCleanupDriver, server_context, driver,
-                  callback);
+    race.NewRacer());
 
-  // Wait for resource fetch to complete.
-  if (!callback->IsDone()) {
-    int64 max_ms = driver->options()->blocking_fetch_timeout_ms();
-    for (int64 start_ms = server_context->timer()->NowMs(), now_ms = start_ms;
-         !callback->IsDone() && now_ms - start_ms < max_ms;
-         now_ms = server_context->timer()->NowMs()) {
-      int64 remaining_ms = max_ms - (now_ms - start_ms);
-
-      driver->BoundedWaitFor(RewriteDriver::kWaitForCompletion, remaining_ms);
+  const int64 deadline = start + driver->options()->blocking_fetch_timeout_ms();
+  const int64 fallback_deadline =
+      start + driver->options()->blocking_fetch_fallback_timeout_ms();
+  if (fallback_deadline < deadline &&
+      !race.WaitForWinner(server_context->timer(), fallback_deadline)) {
+    StringVector decoded_urls;
+    if (driver->DecodeUrl(url, &decoded_urls) && decoded_urls.size() == 1) {
+      message_handler->Message(kInfo,
+        "Slow primary fetch, issuing fallback request for %s to %s",
+        url.spec_c_str(), decoded_urls[0].c_str());
+      CacheUrlAsyncFetcher* fallback_fetcher = driver->CreateCacheFetcher();
+      fallback_fetcher->set_own_fetcher(true);
+      fallback_fetcher->Fetch(
+        decoded_urls[0], server_context->message_handler(), race.NewRacer());
+    } else {
+      message_handler->Message(kInfo,
+        "Cannot issue fallback request for %s: decoding resulted in %d urls",
+        url.spec_c_str(), int(decoded_urls.size()));
     }
   }
 
-  MessageHandler* message_handler = server_context->message_handler();
-  bool ok = false;
-  if (callback->IsDone()) {
-    if (callback->success()) {
-      ok = true;
-    } else {
-      message_handler->Message(kWarning, "Fetch failed for %s, status=%d",
-                               url.spec_c_str(),
-                               callback->response_headers()->status_code());
-    }
-  } else {
+  if (!race.WaitForWinner(server_context->timer(), deadline)) {
     message_handler->Message(kWarning, "Fetch timed out for %s",
-                             url.spec_c_str());
+        url.spec_c_str());
+    driver->Cleanup();
+    return false;
+  }
+
+  if (!race.Winner()->WaitForDone(server_context->timer(), deadline)) {
+    message_handler->Message(kWarning,
+        "Fetch timed out waiting for winner to finish: %s", url.spec_c_str());
+    driver->Cleanup();
+    return false;
+  }
+
+  if (!callback->success()) {
+    message_handler->Message(kWarning, "Fetch failed for %s, status=%d",
+        url.spec_c_str(), callback->response_headers()->status_code());
+    driver->Cleanup();
+    return false;
   }
 
   driver->Cleanup();
-
-  return ok;
+  return true;
 }
 
 ResourceFetch::ResourceFetch(const GoogleUrl& url,

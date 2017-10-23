@@ -420,6 +420,10 @@ void InstawebHandler::HandleAsPagespeedResource() {
     // I think it would be good to change X-Mod-Pagespeed -> X-Page-Speed
     // and use that for all HTML and resource requests.
     response_headers->RemoveAll(kPageSpeedHeader);
+    // Since we've buffered the entire response into memory here, remove any
+    // transfer encoding (e.g. "chunked") and explicitly set the content length.
+    response_headers->RemoveAll(HttpAttributes::kTransferEncoding);
+    response_headers->SetContentLength(output.size());
     send_out_headers_and_body(request_, *response_headers, output);
   } else {
     server_context_->ReportResourceNotFound(original_url_, request_);

@@ -317,6 +317,8 @@ const char RewriteOptions::kCacheFlushPollIntervalSec[] =
     "CacheFlushPollIntervalSec";
 const char RewriteOptions::kFetchHttps[] = "FetchHttps";
 const char RewriteOptions::kFetcherTimeOutMs[] = "FetcherTimeOutMs";
+const char RewriteOptions::kFetcherFallbackTimeOutMs[] =
+    "FetcherFallbackTimeOutMs";
 const char RewriteOptions::kFileCacheCleanInodeLimit[] =
     "FileCacheInodeLimit";
 const char RewriteOptions::kFileCacheCleanIntervalMs[] =
@@ -2016,6 +2018,11 @@ void RewriteOptions::AddProperties() {
   AddBaseProperty(
       5 * Timer::kSecondMs, &RewriteOptions::blocking_fetch_timeout_ms_,
       "bfto", RewriteOptions::kFetcherTimeOutMs,
+      kDirectoryScope,
+      NULL, true);  // TODO(jmarantz): write help & doc for mod_pagespeed.
+  AddBaseProperty(
+      5 * Timer::kSecondMs, &RewriteOptions::blocking_fetch_fallback_timeout_ms_,
+      "bffto", RewriteOptions::kFetcherFallbackTimeOutMs,
       kDirectoryScope,
       NULL, true);  // TODO(jmarantz): write help & doc for mod_pagespeed.
   AddBaseProperty(

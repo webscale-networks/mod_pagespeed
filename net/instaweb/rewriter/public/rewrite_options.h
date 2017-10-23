@@ -263,6 +263,7 @@ class RewriteOptions {
   static const char kExperimentCookieDurationMs[];
   static const char kExperimentSlot[];
   static const char kFetcherTimeOutMs[];
+  static const char kFetcherFallbackTimeOutMs[];
   static const char kFinderPropertiesCacheExpirationTimeMs[];
   static const char kFinderPropertiesCacheRefreshTimeMs[];
   static const char kFlushBufferLimitBytes[];
@@ -1668,6 +1669,12 @@ class RewriteOptions {
   }
   void set_blocking_fetch_timeout_ms(int64 x) {
     set_option(x, &blocking_fetch_timeout_ms_);
+  }
+  int64 blocking_fetch_fallback_timeout_ms() const {
+    return blocking_fetch_fallback_timeout_ms_.value();
+  }
+  void set_blocking_fetch_fallback_timeout_ms(int64 x) {
+    set_option(x, &blocking_fetch_fallback_timeout_ms_);
   }
   bool override_ie_document_mode() const {
     return override_ie_document_mode_.value();
@@ -3693,6 +3700,10 @@ class RewriteOptions {
   // Applies to ResourceFetch::BlockingFetch() and class SyncFetcherAdapter.
   // Does not apply to async fetches.
   Option<int64> blocking_fetch_timeout_ms_;
+  // How long to wait in blocking fetches before starting a fallback fetch to
+  // the decoded URL. Applies to ResourceFetch::BlockingFetch() and class
+  // SyncFetcherAdapter. Does not apply to async fetches.
+  Option<int64> blocking_fetch_fallback_timeout_ms_;
 
   // Option related to generic image quality. This is overridden by
   // image(jpeg/webp) specific options.
