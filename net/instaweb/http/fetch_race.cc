@@ -49,8 +49,8 @@ FetchRace::~FetchRace() {
   }
 }
 
-FetchRace::RacerFetch* FetchRace::NewRacer() {
-  FetchRace::RacerFetch* r = new FetchRace::RacerFetch(this);
+FetchRace::Racer* FetchRace::NewRacer() {
+  FetchRace::Racer* r = new FetchRace::Racer(this);
   racers_.push_back(r);
   return r;
 }
@@ -67,12 +67,12 @@ bool FetchRace::WaitForWinner(Timer* timer, int64 deadline_ms) const {
   return true;
 }
 
-FetchRace::RacerFetch* FetchRace::Winner() const {
+FetchRace::Racer* FetchRace::Winner() const {
   ScopedMutex hold_lock(mutex_.get());
   return winner_;
 }
 
-bool FetchRace::Finish(FetchRace::RacerFetch* racer) {
+bool FetchRace::Finish(FetchRace::Racer* racer) {
   ScopedMutex hold_lock(mutex_.get());
   if (winner_ == NULL) {
     winner_ = racer;
@@ -81,7 +81,7 @@ bool FetchRace::Finish(FetchRace::RacerFetch* racer) {
   return winner_ == racer;
 }
 
-FetchRace::RacerFetch::RacerFetch(FetchRace* race)
+FetchRace::Racer::Racer(FetchRace* race)
     : AsyncFetch(race->target_fetch_->request_context()),
       message_handler_(race->message_handler_),
       mutex_(race->thread_system_->NewMutex()),
@@ -95,7 +95,7 @@ FetchRace::RacerFetch::RacerFetch(FetchRace* race)
 // HandleDone is a little complicated: We have to not only pass along the Done()
 // call if we're the winner, but we also have to carefully delete ourself if the
 // race has ended (usually because we're not the winner, but not always).
-void FetchRace::RacerFetch::HandleDone(bool success) {
+void FetchRace::Racer::HandleDone(bool success) {
   // If we're in the winner, pass the Done call on to the target fetch.
   if (ClaimWin()) {
     target_fetch_->Done(success);
@@ -117,7 +117,7 @@ void FetchRace::RacerFetch::HandleDone(bool success) {
   }
 }
 
-bool FetchRace::RacerFetch::WaitForDone(Timer* timer, int64 deadline_ms) const {
+bool FetchRace::Racer::WaitForDone(Timer* timer, int64 deadline_ms) const {
   ScopedMutex hold_lock(mutex_.get());
   // We loop in here in case the TimedWait returns early.
   while (!done_) {
@@ -130,21 +130,21 @@ bool FetchRace::RacerFetch::WaitForDone(Timer* timer, int64 deadline_ms) const {
   return true;
 }
 
-bool FetchRace::RacerFetch::HandleWrite(const StringPiece& content, MessageHandler* handler) {
+bool FetchRace::Racer::HandleWrite(const StringPiece& content, MessageHandler* handler) {
   if (!ClaimWin()) {
     return true;
   }
   return target_fetch_->Write(content, handler);
 }
 
-bool FetchRace::RacerFetch::HandleFlush(MessageHandler* handler) {
+bool FetchRace::Racer::HandleFlush(MessageHandler* handler) {
   if (!ClaimWin()) {
     return true;
   }
   return target_fetch_->Flush(handler);
 }
 
-void FetchRace::RacerFetch::HandleHeadersComplete() {
+void FetchRace::Racer::HandleHeadersComplete() {
   if (!ClaimWin()) {
     return;
   }
@@ -155,7 +155,7 @@ void FetchRace::RacerFetch::HandleHeadersComplete() {
   }
   target_fetch_->HeadersComplete();
 }
-bool FetchRace::RacerFetch::IsCachedResultValid(const ResponseHeaders& headers) {
+bool FetchRace::Racer::IsCachedResultValid(const ResponseHeaders& headers) {
   if (Disqualified()) {
     // NOTE(aroman) Should this be false? Once disqualified, we should
     // discourage any further work for this fetch.
@@ -164,7 +164,7 @@ bool FetchRace::RacerFetch::IsCachedResultValid(const ResponseHeaders& headers) 
   return target_fetch_->IsCachedResultValid(headers);
 }
 
-bool FetchRace::RacerFetch::IsBackgroundFetch() const {
+bool FetchRace::Racer::IsBackgroundFetch() const {
   if (Disqualified()) {
     // If we're disqualified, allow this to be considered a low-priority fetch.
     return true;
@@ -172,7 +172,7 @@ bool FetchRace::RacerFetch::IsBackgroundFetch() const {
   return target_fetch_->IsBackgroundFetch();
 }
 
-bool FetchRace::RacerFetch::ClaimWin() {
+bool FetchRace::Racer::ClaimWin() {
   ScopedMutex hold_lock(mutex_.get());
   if (race_ == NULL) {
     return false;
@@ -180,12 +180,12 @@ bool FetchRace::RacerFetch::ClaimWin() {
   return race_->Finish(this);
 }
 
-bool FetchRace::RacerFetch::Disqualified() const {
+bool FetchRace::Racer::Disqualified() const {
   ScopedMutex hold_lock(mutex_.get());
   return race_ == NULL;
 }
 
-void FetchRace::RacerFetch::Disqualify() {
+void FetchRace::Racer::Disqualify() {
   // When we are disqualified, that means the parent FetchRace is shutting down
   // and we are now responsible for our lifetime. If Done() has already been
   // called, we should immediately delete ourselves, otherwise we need to delete

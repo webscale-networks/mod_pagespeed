@@ -80,7 +80,7 @@ class Timer;
 //     is called.
 class FetchRace {
  public:
-  class RacerFetch; // forward declare the nested RacerFetch class.
+  class Racer; // forward declare the nested Racer class.
 
   // FetchRace initializes a new fetch race to write to target_fetch.
   FetchRace(
@@ -91,7 +91,7 @@ class FetchRace {
 
   // NewRacer constructs a new fetch to compete in this fetch race to be the
   // first to write to target_fetch_.
-  RacerFetch* NewRacer();
+  Racer* NewRacer();
 
   // Returns true if there was a winner, or false if this timed out without any
   // winner of the race. Once this returns true, Winner() will never return
@@ -105,22 +105,22 @@ class FetchRace {
   // to be done.
   //
   // The returned pointer is valid while FetchRace is alive.
-  RacerFetch* Winner() const LOCKS_EXCLUDED(mutex_);
+  Racer* Winner() const LOCKS_EXCLUDED(mutex_);
 
-  // RacerFetch is a fetch participating in a fetch race. If it is the first to
+  // Racer is a fetch participating in a fetch race. If it is the first to
   // write to the output, then it has won the race and is then responsible for
   // for writing to that output from then on -- there are no points for second
   // place.
   //
-  // RacerFetch can be either owned by the FetchRace or it can delete itself if
+  // Racer can be either owned by the FetchRace or it can delete itself if
   // the FetchRace has already been destroyed. This is because typically the
-  // winner RacerFetch will be completed before the FetchRace destruction and
+  // winner Racer will be completed before the FetchRace destruction and
   // may be accessed after it has completed, but loser racer fetchs may live
   // beyond the lifetime of the parent FetchRace. When the FetchRace has been
   // destroyed, it disqualifies all of the racers and, if they have not already
   // finished, they will take ownership of themselves and delete themselves upon
   // completion.
-  class RacerFetch : public AsyncFetch {
+  class Racer : public AsyncFetch {
    public:
     // WaitForDone waits for the fetch to complete using the given timer and
     // deadline. It returns true if the fetch completed before the timeout and
@@ -143,7 +143,7 @@ class FetchRace {
     bool ClaimWin() LOCKS_EXCLUDED(mutex_);
 
    private:
-    // RacerFetch initializes a new racer within a FetchRace. The only
+    // Racer initializes a new racer within a FetchRace. The only
     // interesting bit during construction is copying the headers from the
     // target fetch -- this is assumed to be a safe operation and that the
     // request headers will not change while the race is going on. Because
@@ -152,9 +152,9 @@ class FetchRace {
     // headers is legit) for the duration of this constructor.
     //
     // This constructor is protected because only the parent FetchRace should
-    // be creating RacerFetch instances due to these preconditions.
-    RacerFetch(FetchRace* race);
-    virtual ~RacerFetch() {}
+    // be creating Racer instances due to these preconditions.
+    Racer(FetchRace* race);
+    virtual ~Racer() {}
 
     // This disqualifies the racer from the fetch race. It will be permanently
     // removed from the race and will not longer write to target_fetch_
@@ -171,7 +171,7 @@ class FetchRace {
     // done, so external users cannot safely call this.
     bool Disqualified() const LOCKS_EXCLUDED(mutex_);
 
-    // FetchRace needs to be able to construct and disqualify RacerFetchs, and
+    // FetchRace needs to be able to construct and disqualify Racers, and
     // it's not safe for anyone else to do so.
     friend class FetchRace;
 
@@ -224,18 +224,18 @@ class FetchRace {
     // but after HandleDone has been passed to the target_fetch_ if appropriate.
     scoped_ptr<ThreadSystem::Condvar> done_cond_;
 
-    // Copying the mutex cannot be done safely. Only pointers to RacerFetch
+    // Copying the mutex cannot be done safely. Only pointers to Racer
     // should ever be handled, with construction done by the parent FetchRace
     // and destruction handled either by FetchRace or, if orphaned, itself.
-    DISALLOW_COPY_AND_ASSIGN(RacerFetch);
-  }; // class RacerFetch
+    DISALLOW_COPY_AND_ASSIGN(Racer);
+  }; // class Racer
 
  private:
   // Finish is called by each racer when they are attempting to write to the
   // target fetch. It returns true if racer won the race. This may be called
   // multiple times for the same racer and it will always return true if racer
   // was the first to finish.
-  bool Finish(RacerFetch* racer) LOCKS_EXCLUDED(mutex_);
+  bool Finish(Racer* racer) LOCKS_EXCLUDED(mutex_);
 
  private:
   // The environment that we're running in:
@@ -248,11 +248,11 @@ class FetchRace {
   // Winner management.
   scoped_ptr<ThreadSystem::CondvarCapableMutex> mutex_;
   scoped_ptr<ThreadSystem::Condvar> winner_cond_;
-  RacerFetch* winner_ GUARDED_BY(mutex_);
+  Racer* winner_ GUARDED_BY(mutex_);
 
   // The list of racers that we've spawned. These need to be cleaned up when we
   // are destroyed.
-  std::vector<RacerFetch*> racers_;
+  std::vector<Racer*> racers_;
 
   DISALLOW_COPY_AND_ASSIGN(FetchRace);
 };
