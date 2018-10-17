@@ -40,7 +40,7 @@ node {
       script: 'cd mod_pagespeed; git log "--pretty=format:%s (%an)" -1'
     )
     stage('build') {
-      sh('mod_pagespeed/build.sh ' + env.PRODUCT_VERSION + ' ' + env.BUILDTYPE + ' ' + env.REVISION)
+      sh('mod_pagespeed/build.sh ' + env.PRODUCT_VERSION + ' ' + env.BUILDTYPE + ' ' + env.LASTCHANGE)
     }
   }
 }
