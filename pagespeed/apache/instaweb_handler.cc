@@ -117,6 +117,16 @@ InstawebHandler::InstawebHandler(request_rec* request)
   // Note: request_context_ must be initialized before ComputeCustomOptions().
   ComputeCustomOptions();
   request_context_->set_options(options_->ComputeHttpOptions());
+
+  // If there is a request ID present in the request notes, set it here
+  // in the request context.
+  const char* request_id = apr_table_get(request->notes, "REQUEST_ID");
+  if (request_id) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "Request ID value from request context: %s", request_id);
+    int64 req_id = strtoll(request_id, NULL, 10);
+    request_context_->set_request_id(req_id);
+  }
 }
 
 InstawebHandler::~InstawebHandler() {
