@@ -1,4 +1,18 @@
 #!/bin/bash
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 # Install mod_pagespeed testing version of Apache for use in checkin test.
 # This also installs the dependencies for mod_h2 if you're building 2.4
 #
@@ -8,28 +22,11 @@
 set -e
 set -u
 
-# Note: It is ok if we include packages here that are already installed.
-# (Can't use lsb_release here because RedHat-derived distros don't install it by
-# default.)
-if [ -f /etc/debian_version ]; then
-  deps="autoconf g++ curl gperf git libssl-dev make"
-  deps+=" subversion valgrind libev-dev libpcre3-dev zlib1g-dev"
+this_dir="$(dirname "${BASH_SOURCE[0]}")"
+src="$this_dir/.."
+third_party="$(readlink -m "$src/third_party")"
 
-  if [ -n "$(apt-cache search --names-only '^libtool-bin$')" ]; then
-    # With Ubuntu 16+ we need libtool-bin instead.
-    deps+=" libtool-bin"
-  else
-    deps+=" libtool"
-  fi
-  sudo apt-get install $deps
-elif [ -f /etc/redhat-release ]; then
-  sudo yum install autoconf gcc-c++ curl gperf libtool git \
-                   subversion valgrind libev-devel pcre-devel zlib-devel \
-                   openssl-devel
-else
-  echo "Unknown linux distro; can't install deps."
-  exit 1
-fi
+"$src/install/install_required_packages.sh" --additional_dev_packages
 
 if [ $# -ne 2 ]; then
   echo Usage: $0 '2.2|2.4 worker|event|prefork|prefork-debug'
@@ -67,9 +64,6 @@ fi
 # for different MPMs -- the sources do not change so we can debug against any of
 # them.
 
-this_dir="$(dirname "${BASH_SOURCE[0]}")"
-third_party="$(readlink -m "$this_dir/../third_party")"
-
 cd "$third_party/$HTTPD_DIR/src"
 
 if [ -z "$(ls)" ]; then
@@ -83,7 +77,7 @@ cd "$third_party/apr/src"
 ./buildconf --prefix=$TARGET
 ./configure --prefix=$TARGET
 make
-make install
+make install -j1
 
 cd "$third_party/aprutil/src"
 ./buildconf --with-apr="$third_party/apr/src" --prefix=$TARGET
@@ -95,6 +89,7 @@ if [ "$HTTPD_DIR" = "httpd24" ]; then
   # nghttp2 depends on Apache 2.4+, so only build it for 2.4.
   cd "$third_party/nghttp2"
   echo "Configuring nghttp2"
+  autoreconf -if
   ./configure --prefix=$TARGET
   echo "Building nghttp2"
   make

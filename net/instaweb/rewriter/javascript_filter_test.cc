@@ -86,6 +86,10 @@ const char kJsonMinData[] = "{'foo':['bar','baz']}";
 const char kOrigJsonName[] = "hello.json";
 const char kRewrittenJsonName[] = "hello.json";
 
+GoogleString ScriptSrc(const StringPiece& url) {
+  return net_instaweb::StrCat("<script src=\"", url, "\"></script>");
+}
+
 }  // namespace
 
 namespace net_instaweb {
@@ -227,7 +231,8 @@ TEST_P(JavascriptFilterTest, DebugForUnauthorizedDomain) {
   GoogleUrl gurl(kUnauthorizedJs);
   StrAppend(&html_output,
             "<!--",
-            RewriteDriver::GenerateUnauthorizedDomainDebugComment(gurl),
+            rewrite_driver()->GenerateUnauthorizedDomainDebugComment(
+                gurl, RewriteDriver::InputRole::kScript),
             "-->"
             "\n");
   html_output = AddHtmlBody(html_output);
@@ -1407,6 +1412,155 @@ TEST_P(JavascriptFilterTest, ExternalAndNotInline) {
 
 TEST_P(JavascriptFilterTest, ContentTypeValidation) {
   ValidateFallbackHeaderSanitization(kFilterId);
+}
+
+TEST_P(JavascriptFilterTest, BasicCsp) {
+  InitFilters();
+  EnableDebug();
+
+  SetResponseWithDefaultHeaders(
+      "scripts/a.js", kContentTypeJavascript, kJsData, 100);
+  SetResponseWithDefaultHeaders(
+      "uploads/sneaky.png", kContentTypeJavascript, kJsData, 100);
+
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"script-src */scripts/;  default-src */uploads/\">";
+
+  ValidateExpected(
+      "basic_csp",
+      StrCat(kCsp,
+             ScriptSrc("scripts/a.js"),
+             ScriptSrc("uploads/sneaky.png")),
+      StrCat(kCsp,
+             ScriptSrc(Encode("scripts/", "jm", "0", "a.js", "js")),
+             ScriptSrc("uploads/sneaky.png"),
+              "<!--The preceding resource was not rewritten "
+             "because CSP disallows its fetch-->"));
+}
+
+TEST_P(JavascriptFilterTest, RenderCsp) {
+  InitFilters();
+  EnableDebug();
+
+  SetResponseWithDefaultHeaders(
+      "scripts/a.js", kContentTypeJavascript, kJsData, 100);
+  SetResponseWithDefaultHeaders(
+      "uploads/sneaky.png", kContentTypeJavascript, kJsData, 100);
+
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"script-src */scripts/a.js;\">";
+
+  // First try w/o CSP, should rewrite.
+  ValidateExpected(
+      "no_csp",
+      ScriptSrc("scripts/a.js"),
+      ScriptSrc(Encode("scripts/", "jm", "0", "a.js", "js")));
+
+  // Now render again w/CSP -- blocked since .pagespeed. resource isn't
+  // permitted.
+  ValidateExpected(
+      "render_csp",
+      StrCat(kCsp, ScriptSrc("scripts/a.js")),
+      StrCat(kCsp, ScriptSrc("scripts/a.js"),
+             "<!--PageSpeed output (by JavascriptFilter) not permitted by "
+             "Content Security Policy-->"));
+}
+
+TEST_P(JavascriptFilterTest, CspIrrelevant) {
+  InitFilters();
+  EnableDebug();
+
+  SetResponseWithDefaultHeaders(
+      "scripts/a.js", kContentTypeJavascript, kJsData, 100);
+
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"img-src https:\">";
+
+  ValidateExpected(
+      "basic_csp",
+      StrCat(kCsp,
+             ScriptSrc("scripts/a.js")),
+      StrCat(kCsp,
+             ScriptSrc(Encode("scripts/", "jm", "0", "a.js", "js"))));
+}
+
+TEST_P(JavascriptFilterTest, InlineCsp) {
+  InitFilters();
+  EnableDebug();
+
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"script-src */scripts/;  default-src */uploads/\">";
+  static const char kScript[] =
+      "<script> var a  = 42;</script>";
+
+  ValidateExpected(
+      "inline_csp",
+      StrCat(kCsp, kScript),
+      StrCat(kCsp, kScript,
+             "<!--Avoiding modifying inline script with CSP present-->"));
+}
+
+TEST_P(JavascriptFilterTest, InlineCsp2) {
+  InitFilters();
+  EnableDebug();
+
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"default-src */uploads/\">";
+  static const char kScript[] =
+      "<script> var a  = 42;</script>";
+
+  ValidateExpected(
+      "inline_csp2",
+      StrCat(kCsp, kScript),
+      StrCat(kCsp, kScript,
+             "<!--Avoiding modifying inline script with CSP present-->"));
+}
+
+TEST_P(JavascriptFilterTest, InlineCsp3) {
+  InitFilters();
+  EnableDebug();
+
+  // This one doesn't restrict scripts.
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"img-src */uploads/\">";
+  static const char kScript[] =
+      "<script> var a  = 42;</script>";
+  static const char kScriptMin[] =
+      "<script>var a=42;</script>";
+
+  ValidateExpected(
+      "inline_csp3",
+      StrCat(kCsp, kScript),
+      StrCat(kCsp, kScriptMin));
+}
+
+TEST_P(JavascriptFilterTest, CspBaseUri) {
+  InitFilters();
+  EnableDebug();
+  SetResponseWithDefaultHeaders(
+      "scripts/a.js", kContentTypeJavascript, kJsData, 100);
+
+  static const char kCspAndBase[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"base-uri whatever; script-src *\">"
+      "<base href=\"http://test.com/\">";
+
+  ValidateExpected(
+      "base_uri_csp",
+      StrCat(kCspAndBase,
+             ScriptSrc("scripts/a.js"),
+             ScriptSrc("http://test.com/scripts/a.js")),
+      StrCat(kCspAndBase,
+             "<!--Unable to check safety of a base with CSP base-uri, "
+             "proceeding conservatively.-->",
+             ScriptSrc("scripts/a.js"),
+             ScriptSrc("http://test.com/scripts/a.js.pagespeed.jm.0.js")));
 }
 
 // We test with use_experimental_minifier == GetParam() as both true and false.

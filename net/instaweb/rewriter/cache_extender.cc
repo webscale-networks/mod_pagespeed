@@ -65,13 +65,15 @@ const int64 kMinThresholdMs = Timer::kMonthMs;
 
 class CacheExtender::Context : public SingleRewriteContext {
  public:
-  Context(CacheExtender* extender, RewriteDriver* driver,
+  Context(RewriteDriver::InputRole input_role,
+          CacheExtender* extender, RewriteDriver* driver,
           RewriteContext* parent)
       : SingleRewriteContext(driver, parent,
                              NULL /* no resource context */),
-        extender_(extender) {}
+        input_role_(input_role), extender_(extender) {}
   virtual ~Context() {}
 
+  bool PolicyPermitsRendering() const override;
   virtual void Render();
   virtual void RewriteSingle(const ResourcePtr& input,
                              const OutputResourcePtr& output);
@@ -101,6 +103,7 @@ class CacheExtender::Context : public SingleRewriteContext {
   }
 
  private:
+  RewriteDriver::InputRole input_role_;
   CacheExtender* extender_;
   DISALLOW_COPY_AND_ASSIGN(Context);
 };
@@ -171,15 +174,19 @@ void CacheExtender::StartElementImpl(HtmlElement* element) {
   resource_tag_scanner::ScanElement(element, driver()->options(), &attributes);
   for (int i = 0, n = attributes.size(); i < n; ++i) {
     bool may_load = false;
+    RewriteDriver::InputRole input_role = RewriteDriver::InputRole::kUnknown;
     switch (attributes[i].category) {
       case semantic_type::kStylesheet:
         may_load = driver()->MayCacheExtendCss();
+        input_role = RewriteDriver::InputRole::kStyle;
         break;
       case semantic_type::kImage:
         may_load = driver()->MayCacheExtendImages();
+        input_role = RewriteDriver::InputRole::kImg;
         break;
       case semantic_type::kScript:
         may_load = driver()->MayCacheExtendScripts();
+        input_role = RewriteDriver::InputRole::kScript;
         break;
       default:
         // Does the url in the attribute end in .pdf, ignoring query params?
@@ -202,7 +209,7 @@ void CacheExtender::StartElementImpl(HtmlElement* element) {
     // resources are non-cacheable or privately cacheable.
     if (driver()->IsRewritable(element)) {
       ResourcePtr input_resource(CreateInputResourceOrInsertDebugComment(
-          attributes[i].url->DecodedValueOrNull(), element));
+          attributes[i].url->DecodedValueOrNull(), input_role, element));
       if (input_resource.get() == NULL) {
         continue;
       }
@@ -214,7 +221,8 @@ void CacheExtender::StartElementImpl(HtmlElement* element) {
 
       ResourceSlotPtr slot(driver()->GetSlot(
           input_resource, element, attributes[i].url));
-      Context* context = new Context(this, driver(), NULL /* not nested */);
+      Context* context = new Context(input_role, this, driver(),
+                                     nullptr /* not nested */);
       context->AddSlot(slot);
       driver()->InitiateRewrite(context);
     }
@@ -233,7 +241,9 @@ void CacheExtender::StartElementImpl(HtmlElement* element) {
         if (slot == nullptr) {
           continue;
         }
-        Context* context = new Context(this, driver(), nullptr /* !nested */);
+        Context* context = new Context(
+              RewriteDriver::InputRole::kImg, this,
+              driver(), nullptr /* !nested */);
         context->AddSlot(RefCountedPtr<ResourceSlot>(slot));
         driver()->InitiateRewrite(context);
       }
@@ -254,6 +264,19 @@ void CacheExtender::Context::RewriteSingle(
   RewriteDone(
       extender_->RewriteLoadedResource(
           input_resource, output_resource, mutable_output_partition(0)), 0);
+}
+
+bool CacheExtender::Context::PolicyPermitsRendering() const {
+  if (num_output_partitions() == 1 && output(0).get() != nullptr
+      && output(0)->has_hash()) {
+    // This uses the InputRole rather than CspDirective variant to
+    // handle kUnknown (and to get bonus handling of kReconstruction,
+    // which wouldn't actually call this, but for which we still need to
+    // override).
+    return Driver()->IsLoadPermittedByCsp(
+        GoogleUrl(output(0)->url()), input_role_);
+  }
+  return true;  // e.g. failure cases -> still want to permit error to render.
 }
 
 void CacheExtender::Context::Render() {
@@ -394,12 +417,14 @@ RewriteResult CacheExtender::RewriteLoadedResource(
 }
 
 RewriteContext* CacheExtender::MakeRewriteContext() {
-  return new Context(this, driver(), NULL /*not nested*/);
+  return new Context(RewriteDriver::InputRole::kReconstruction, this,
+                     driver(), nullptr /*not nested*/);
 }
 
 RewriteContext* CacheExtender::MakeNestedContext(
     RewriteContext* parent, const ResourceSlotPtr& slot) {
-  Context* context = new Context(this, NULL /* driver*/, parent);
+  Context* context = new Context(
+      RewriteDriver::InputRole::kUnknown, this, nullptr /* driver*/, parent);
   context->AddSlot(slot);
   return context;
 }

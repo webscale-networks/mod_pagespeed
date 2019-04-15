@@ -1,5 +1,19 @@
 #!/bin/bash
-# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Author: cheesy@google.com (Steve Hill)
 #
 # Build a mod_pagespeed release on a gcloud VM.
@@ -12,7 +26,7 @@ set -u
 
 branch=master
 delete_existing_machine=false
-image_family=ubuntu-1204-lts
+image_family=ubuntu-1404-lts
 keep_machine=false
 machine_name=
 use_existing_machine=false
@@ -85,7 +99,7 @@ if [ -z "$machine_name" ]; then
   machine_name+="-${sanitized_branch}-mps-build${bit_suffix}"
 fi
 
-instances=$(gcloud compute instances list -q "$machine_name")
+instances=$(gcloud compute instances list --filter="name=( '$machine_name' )")
 if [ -n "$instances" ]; then
   if $delete_existing_machine; then
     gcloud -q compute instances delete "$machine_name"
@@ -114,8 +128,11 @@ gcloud compute ssh "$machine_name" -- bash << EOF
   else
     sudo apt-get -y install git
   fi
-  git clone -b "$branch" https://github.com/pagespeed/mod_pagespeed.git
+  # CentOS 6's git is old enough that git clone -b <tag> doesn't work and
+  # silently checks out HEAD. To be safe we use an explicit checkout below.
+  git clone https://github.com/pagespeed/mod_pagespeed.git
   cd mod_pagespeed
+  git checkout "$branch"
   install/build_release.sh $@
 EOF
 

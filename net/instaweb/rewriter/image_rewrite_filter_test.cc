@@ -1357,6 +1357,28 @@ TEST_F(ImageRewriteTest, ImgSrcSetWithCacheExtender) {
       "srcset=\"xa.png.pagespeed.ic.0.png 1x, xb.png.pagespeed.ic.0.png 2x\">");
 }
 
+TEST_F(ImageRewriteTest, ImageUrlValuedAttributeWithFlush) {
+  options()->EnableFilter(RewriteOptions::kRecompressJpeg);
+  options()->AddUrlValuedAttribute("li", "data-thumb", semantic_type::kImage);
+  rewrite_driver()->AddFilters();
+
+  GoogleString initial_url = StrCat(kTestDomain, kPuzzleJpgFile);
+  AddFileToMockFetcher(initial_url, kPuzzleJpgFile, kContentTypeJpeg, 100);
+
+  SetupWriter();
+  rewrite_driver()->StartParse(kTestDomain);
+  rewrite_driver()->ParseText("<html><body><ul><li data-thumb='Puzzle.jpg'>");
+  // Flush in middle of parent and child element
+  rewrite_driver()->Flush();
+  rewrite_driver()->ParseText("<img src='Puzzle.jpg'/></li></ul></body></html>");
+  rewrite_driver()->FinishParse();
+
+  // Check output with optimized parent, child image nodes
+  EXPECT_STREQ("<html><body><ul><li data-thumb='xPuzzle.jpg.pagespeed.ic.0.jpg'>"
+      "<img src='xPuzzle.jpg.pagespeed.ic.0.jpg'/></li></ul></body></html>",
+      output_buffer_);
+}
+
 TEST_F(ImageRewriteTest, ImgTagWithComputeStatistics) {
   options()->EnableFilter(RewriteOptions::kComputeStatistics);
   RewriteImage("img", kContentTypeJpeg);
@@ -3991,7 +4013,8 @@ TEST_F(ImageRewriteTest, DebugMessageUnauthorized) {
       "noise, and has no animation.-->"
       "<img src=", kUnauthorizedPath, ">",
       "<!--",
-      RewriteDriver::GenerateUnauthorizedDomainDebugComment(unauth_gurl),
+      rewrite_driver()->GenerateUnauthorizedDomainDebugComment(
+          unauth_gurl, RewriteDriver::InputRole::kImg),
       "-->");
 
   EXPECT_THAT(output_buffer_, HasSubstr(expected));
@@ -4382,6 +4405,71 @@ TEST_F(ImageRewriteTest, IproAllowAutoNoSmallScreenSaveDataQualities) {
 
 TEST_F(ImageRewriteTest, ContentTypeValidation) {
   ValidateFallbackHeaderSanitization("ic");
+}
+
+TEST_F(ImageRewriteTest, BasicCsp) {
+  AddRecompressImageFilters();
+  rewrite_driver()->AddFilters();
+  EnableDebug();
+  AddFileToMockFetcher("images/a.jpg", kPuzzleJpgFile, kContentTypeJpeg, 100);
+  AddFileToMockFetcher("uploads/b.png", kPuzzleJpgFile, kContentTypeJpeg, 100);
+  const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"img-src */images/;  default-src */uploads/\">";
+
+  ValidateExpected(
+      "basic_csp",
+      StrCat(kCsp,
+             "<img src=\"images/a.jpg\">",
+             "<img src=\"uploads/b.png\">"),
+      StrCat(kCsp,
+             "<img src=\"", Encode("images/", "ic", "0", "a.jpg", "jpg"), "\">",
+             "<!--Image http://test.com/images/a.jpg does not appear "
+             "to need resizing.-->"
+             "<img src=\"uploads/b.png\">",
+             "<!--The preceding resource was not rewritten "
+             "because CSP disallows its fetch-->"));
+}
+
+TEST_F(ImageRewriteTest, RenderCsp) {
+  AddRecompressImageFilters();
+  rewrite_driver()->AddFilters();
+  EnableDebug();
+  AddFileToMockFetcher("images/a.jpg", kPuzzleJpgFile, kContentTypeJpeg, 100);
+  AddFileToMockFetcher("uploads/b.png", kPuzzleJpgFile, kContentTypeJpeg, 100);
+
+  // We want a policy that only affects output resources here (since the input
+  // one will apply at CreateInputResource time, before the cache lookup)
+  static const char kCsp[] =
+      "<meta http-equiv=\"Content-Security-Policy\" "
+      "content=\"img-src */images/ */uploads/b.png\">";
+
+  // Rewrite without CSP, both should change.
+  ValidateExpected(
+      "no_csp",
+      StrCat("<img src=\"images/a.jpg\">",
+             "<img src=\"uploads/b.png\">"),
+      StrCat("<img src=\"", Encode("images/", "ic", "0", "a.jpg", "jpg"), "\">",
+             "<!--Image http://test.com/images/a.jpg does not appear "
+             "to need resizing.-->"
+             "<img src=\"", Encode("uploads/", "ic", "0", "b.png", "jpg"),
+             "\"><!--Image http://test.com/uploads/b.png does not appear "
+             "to need resizing.-->"));
+
+  // Rewrite with CSP policy --- reusing cached results from above ---
+  // only one should be optimized.
+  ValidateExpected(
+      "cached_csp",
+      StrCat(kCsp,
+             "<img src=\"images/a.jpg\">",
+             "<img src=\"uploads/b.png\">"),
+      StrCat(kCsp,
+             "<img src=\"", Encode("images/", "ic", "0", "a.jpg", "jpg"), "\">",
+             "<!--Image http://test.com/images/a.jpg does not appear "
+             "to need resizing.-->"
+             "<img src=\"uploads/b.png\">"
+             "<!--PageSpeed output (by ImageRewrite) not permitted by "
+             "Content Security Policy-->"));
 }
 
 }  // namespace net_instaweb

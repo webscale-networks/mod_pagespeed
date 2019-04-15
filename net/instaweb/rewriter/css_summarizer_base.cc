@@ -68,6 +68,11 @@ class CssSummarizerBase::Context : public SingleRewriteContext {
   void SetupExternalRewrite(HtmlElement* element);
 
  protected:
+  bool PolicyPermitsRendering() const override {
+    // Subclasses are responsible for dealing with CSP.
+    return true;
+  }
+
   virtual void Render();
   virtual void WillNotRender();
   virtual void Cancel();
@@ -449,8 +454,9 @@ void CssSummarizerBase::StartExternalRewrite(
     HtmlElement* link, HtmlElement::Attribute* src, StringPiece rel) {
   // Create the input resource for the slot.
   bool is_authorized;
-  ResourcePtr input_resource(CreateInputResource(src->DecodedValueOrNull(),
-                                                 &is_authorized));
+  ResourcePtr input_resource(CreateInputResource(
+      src->DecodedValueOrNull(), RewriteDriver::InputRole::kStyle,
+      &is_authorized));
   if (input_resource.get() == NULL) {
     // Record a failure, so the subclass knows of it.
     summaries_.push_back(SummaryInfo());

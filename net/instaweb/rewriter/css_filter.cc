@@ -82,6 +82,9 @@ class ImageCombineFilter;
 
 namespace {
 
+const char kInlineCspMessage[] =
+    "Avoiding modifying inline style with CSP present";
+
 // A simple transformer that resolves URLs against a base. Unlike
 // RewriteDomainTransformer, does not do any mapping or trimming.
 class SimpleAbsolutifyTransformer : public CssTagScanner::Transformer {
@@ -285,6 +288,10 @@ bool CssFilter::Context::SendFallbackResponse(
       break;
   }
   return ret;
+}
+
+bool CssFilter::Context::PolicyPermitsRendering() const {
+  return AreOutputsAllowedByCsp(CspDirective::kStyleSrc);
 }
 
 void CssFilter::Context::Render() {
@@ -544,7 +551,10 @@ bool CssFilter::Context::FallbackRewriteUrls(
       CHECK(url.IsAnyValid()) << it->first;
       // Add slot.
       bool is_authorized;
-      ResourcePtr resource = Driver()->CreateInputResource(url, &is_authorized);
+      // This can be both an image or CSS at very least, so have to be
+      // conservative wrt to policy.
+      ResourcePtr resource = Driver()->CreateInputResource(
+          url, RewriteDriver::InputRole::kUnknown, &is_authorized);
       if (resource.get()) {
         ResourceSlotPtr slot(new AssociationSlot(
             resource, fallback_transformer_->map(), url.Spec()));
@@ -969,7 +979,7 @@ void CssFilter::Characters(HtmlCharactersNode* characters_node) {
     // Note: HtmlParse should guarantee that we only get one CharactersNode
     // per <style> block even if it is split by a flush. However, this code
     // will still mostly work if we somehow got multiple CharacterNodes.
-    StartInlineRewrite(characters_node);
+    StartInlineRewrite(characters_node, style_element_);
   }
 }
 
@@ -998,7 +1008,14 @@ void CssFilter::EndElementImpl(HtmlElement* element) {
   }
 }
 
-void CssFilter::StartInlineRewrite(HtmlCharactersNode* char_node) {
+void CssFilter::StartInlineRewrite(HtmlCharactersNode* char_node,
+                                   HtmlElement* parent_element) {
+  if (driver()->content_security_policy().HasDirectiveOrDefaultSrc(
+        CspDirective::kStyleSrc)) {
+    driver()->InsertDebugComment(kInlineCspMessage, parent_element);
+    return;
+  }
+
   ResourcePtr input_resource(MakeInlineResource(char_node->contents()));
   ResourceSlotPtr slot(driver()->GetInlineSlot(input_resource, char_node));
 
@@ -1029,6 +1046,11 @@ void CssFilter::StartInlineRewrite(HtmlCharactersNode* char_node) {
 void CssFilter::StartAttributeRewrite(HtmlElement* element,
                                       HtmlElement::Attribute* style,
                                       InlineCssKind inline_css_kind) {
+  if (driver()->content_security_policy().HasDirectiveOrDefaultSrc(
+        CspDirective::kStyleSrc)) {
+    driver()->InsertDebugComment(kInlineCspMessage, element);
+    return;
+  }
   ResourcePtr input_resource(MakeInlineResource(style->DecodedValueOrNull()));
   ResourceSlotPtr slot(
       driver()->GetInlineAttributeSlot(input_resource, element, style));
@@ -1053,7 +1075,7 @@ void CssFilter::StartExternalRewrite(HtmlElement* link,
   }
   // Create the input resource for the slot.
   ResourcePtr input_resource(CreateInputResourceOrInsertDebugComment(
-      src->DecodedValueOrNull(), link));
+      src->DecodedValueOrNull(), RewriteDriver::InputRole::kStyle, link));
   if (input_resource.get() == NULL) {
     return;
   }

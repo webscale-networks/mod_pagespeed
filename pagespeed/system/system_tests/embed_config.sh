@@ -1,8 +1,27 @@
+#!/bin/bash
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 start_test Embed image configuration in rewritten image URL.
 # The embedded configuration is placed between the "pagespeed" and "ic", e.g.
 # *xPuzzle.jpg.pagespeed.gp+jp+pj+js+rj+rp+rw+ri+cp+md+iq=73.ic.oFXPiLYMka.jpg
 # We use a regex matching "gp+jp+pj+js+rj+rp+rw+ri+cp+md+iq=73" rather than
 # spelling it out to avoid test regolds when we add image filter IDs.
+# TODO(oschaaf): I have observed xPuzzle.pagespeed. partially optimized here, 
+# served with a short cache ttl. This would cause this test to flake.
+# For now, the rewrite deadline has been bumped in the configuration of this
+# vhost.
 http_proxy=$SECONDARY_HOSTNAME fetch_until -save -recursive \
     http://embed-config-html.example.org/embed_config.html \
     'fgrep -c .pagespeed.' 3 --save-headers

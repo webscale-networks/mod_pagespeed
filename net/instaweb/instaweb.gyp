@@ -1174,6 +1174,21 @@
       ],
     },
     {
+      'target_name': 'instaweb_rewriter_csp_gperf',
+      'variables': {
+        'instaweb_gperf_subdir': 'net/instaweb/rewriter',
+      },
+      'sources': [
+        'rewriter/csp_directive.gperf',
+      ],
+      'dependencies': [
+        '<(DEPTH)/pagespeed/kernel.gyp:util',
+      ],
+      'includes': [
+        'gperf.gypi',
+      ],
+    },
+    {
       'target_name': 'instaweb_static_asset_config_pb',
       'variables': {
         'instaweb_protoc_subdir': 'net/instaweb/rewriter',
@@ -1535,6 +1550,7 @@
         'instaweb_responsive_js_data2c',
         'instaweb_responsive_js_opt_data2c',
         'instaweb_rewriter_base',
+        'instaweb_rewriter_csp_gperf',
         'instaweb_rewriter_css',
         'instaweb_rewriter_image',
         'instaweb_rewriter_javascript',
@@ -1568,6 +1584,7 @@
         'rewriter/css_move_to_head_filter.cc',
         'rewriter/css_outline_filter.cc',
         'rewriter/css_tag_scanner.cc',
+        'rewriter/csp.cc',
         'rewriter/data_url_input_resource.cc',
         'rewriter/debug_filter.cc',
         'rewriter/decode_rewritten_urls_filter.cc',
@@ -1615,7 +1632,6 @@
         'rewriter/property_cache_util.cc',
         'rewriter/push_preload_filter.cc',
         'rewriter/redirect_on_size_limit_filter.cc',
-        'rewriter/render_blocking_html_computation.cc',
         'rewriter/resource_combiner.cc',
         'rewriter/resource_fetch.cc',
         'rewriter/resource_slot.cc',

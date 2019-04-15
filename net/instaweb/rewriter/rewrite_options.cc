@@ -137,6 +137,7 @@ const char RewriteOptions::kGoogleFontCssInlineMaxBytes[] =
 const char RewriteOptions::kHideRefererUsingMeta[] = "HideRefererUsingMeta";
 const char RewriteOptions::kHttpCacheCompressionLevel[] =
     "HttpCacheCompressionLevel";
+const char RewriteOptions::kHonorCsp[] = "HonorCsp";
 const char RewriteOptions::kIdleFlushTimeMs[] = "IdleFlushTimeMs";
 const char RewriteOptions::kImageInlineMaxBytes[] = "ImageInlineMaxBytes";
 const char RewriteOptions::kImageJpegNumProgressiveScans[] =
@@ -2080,6 +2081,11 @@ void RewriteOptions::AddProperties() {
   AddBaseProperty("", &RewriteOptions::amp_link_pattern_, "alp",
                   kAmpLinkPattern, kDirectoryScope, nullptr,
                   true);  // Not applicable for mod_pagespeed.
+  AddBaseProperty(false, &RewriteOptions::honor_csp_, "hcsp",
+                  kHonorCsp, kServerScope,
+                  "Controls whether PageSpeed should pay attention to "
+                  "Content-Security-Policy directives",
+                  false);
 
   // Note: defer_javascript and defer_iframe were previously not
   // trusted on mobile user-agents, but have now matured to the point
@@ -3365,6 +3371,8 @@ bool RewriteOptions::ParseFromString(StringPiece value_string,
     *value = bool_value ? kEnabledOn : kEnabledOff;
   } else if (StringCaseEqual(value_string, "unplugged")) {
     *value = kEnabledUnplugged;
+  } else if (StringCaseEqual(value_string, "standby")) {
+    *value = kEnabledStandby;
   } else {
     // value_string is not "true"/"false" or "on"/"off"/"unplugged".
     // Return a parse error.
@@ -4207,6 +4215,7 @@ GoogleString RewriteOptions::OptionsToString() const {
     case kEnabledOff:       StrAppend(&output, "off\n\n"); break;
     case kEnabledOn:        StrAppend(&output, "on\n\n"); break;
     case kEnabledUnplugged: StrAppend(&output, "unplugged\n\n"); break;
+    case kEnabledStandby:   StrAppend(&output, "standby\n\n"); break;
   }
   output += "Filters\n";
   for (int i = kFirstFilter; i != kEndOfFilters; ++i) {

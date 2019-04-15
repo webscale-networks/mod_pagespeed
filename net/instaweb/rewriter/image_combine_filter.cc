@@ -837,6 +837,10 @@ class ImageCombineFilter::Context : public RewriteContext {
     RewriteDone(result, partition_index);
   }
 
+  bool PolicyPermitsRendering() const {
+    return AreOutputsAllowedByCsp(CspDirective::kImgSrc);
+  }
+
   // Finalize the declarations for the sprited slots.
   // TODO(nforman): be smarter about when to sprite and when not.
   // e.g. if it turns out all the divs are too big to use the sprite
@@ -1179,7 +1183,8 @@ bool ImageCombineFilter::AddCssBackgroundContext(
                                                    decls));
   future->Initialize(values->at(value_index));
 
-  ResourcePtr resource = CreateInputResource(url_piece, is_authorized);
+  ResourcePtr resource = CreateInputResource(
+      url_piece, RewriteDriver::InputRole::kImg, is_authorized);
   if (resource.get() == NULL) {
     return false;
   }

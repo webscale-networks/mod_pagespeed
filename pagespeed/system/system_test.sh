@@ -1,5 +1,19 @@
 #!/bin/bash
 #
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Runs system tests for system/ and automatic/.
 #
 # See automatic/system_test_helpers.sh for usage.
@@ -67,7 +81,11 @@ SYSTEM_TEST_DIR="$(dirname "${BASH_SOURCE[0]}")/system_tests/"
 run_test check_headers
 run_test aris
 run_test css_combining_authorization
+run_test css_minify_calc_function_value_zero
+run_test css_minify_unicode_range_descriptor
 run_test add_instrumentation
+run_test type_attribute_pedantic
+run_test inline_css_link_element_in_body
 run_test cache_partial_html
 run_test flush_subresources
 run_test respect_custom_options
@@ -93,6 +111,8 @@ if [ $statistics_enabled = "1" ]; then
 fi
 run_test prioritize_critical_css
 if [ "$SECONDARY_HOSTNAME" != "" ]; then
+  run_test image_rewrite_with_flush
+  run_test pagespeed_on_off_unplugged_standby
   run_test ajax_overrides_experiments
 
   # The broken_fetch test can only run with a file-cache, not with

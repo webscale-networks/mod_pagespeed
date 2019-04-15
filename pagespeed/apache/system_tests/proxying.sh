@@ -1,3 +1,18 @@
+#!/bin/bash
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 start_test Issue 609 -- proxying non-.pagespeed content, and caching it locally
 URL="$PRIMARY_SERVER/modpagespeed_http/not_really_a_font.woff"
 echo $WGET_DUMP $URL ....
@@ -19,7 +34,7 @@ fi
 start_test Do not proxy content without a Content-Type header
 # These tests depend on modpagespeed.com being configured to serve an example
 # file with a content-type header on port 8091 and without one on port 8092.
-# scripts/serve_proxying_tests.sh can do this.
+# scripts/serve_proxying_tests.py can do this.
 URL="$PRIMARY_SERVER/content_type_absent/"
 CONTENTS="This file should not be proxied"
 

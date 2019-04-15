@@ -2980,6 +2980,7 @@ class TestNotifyFilter : public CommonFilter {
       RewriteDone(kRewriteFailed, 0);
     }
 
+    bool PolicyPermitsRendering() const override { return true; }
     virtual const char* id() const { return "testnotify"; }
     virtual OutputResourceKind kind() const { return kRewrittenResource; }
 
@@ -3002,7 +3003,8 @@ class TestNotifyFilter : public CommonFilter {
     if (href != NULL) {
       bool unused;
       ResourcePtr input_resource(CreateInputResource(
-          href->DecodedValueOrNull(), &unused));
+          href->DecodedValueOrNull(), RewriteDriver::InputRole::kUnknown,
+          &unused));
       ResourceSlotPtr slot(driver()->GetSlot(input_resource, element, href));
       Context* context = new Context(driver(), sync_);
       context->AddSlot(slot);
@@ -5101,6 +5103,7 @@ class FailOnHashMismatchFilter : public RewriteFilter {
 
     virtual bool FailOnHashMismatch() const { return true; }
 
+    bool PolicyPermitsRendering() const override { return true; }
     virtual const char* id() const { return kFilterId; }
     virtual OutputResourceKind kind() const { return kRewrittenResource; }
     virtual void RewriteSingle(

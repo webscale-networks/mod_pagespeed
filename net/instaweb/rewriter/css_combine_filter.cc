@@ -178,7 +178,7 @@ class CssCombineFilter::Context : public RewriteContext {
 
   bool AddElement(HtmlElement* element, HtmlElement::Attribute* href) {
     ResourcePtr resource(filter_->CreateInputResourceOrInsertDebugComment(
-        href->DecodedValueOrNull(), element));
+        href->DecodedValueOrNull(), RewriteDriver::InputRole::kStyle, element));
     if (resource.get() == NULL) {
       return false;
     }
@@ -268,6 +268,10 @@ class CssCombineFilter::Context : public RewriteContext {
       }
     }
     RewriteDone(result, partition_index);
+  }
+
+  bool PolicyPermitsRendering() const override {
+    return AreOutputsAllowedByCsp(CspDirective::kStyleSrc);
   }
 
   virtual void Render() {

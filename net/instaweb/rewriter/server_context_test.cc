@@ -182,8 +182,8 @@ class ServerContextTest : public RewriteTestBase {
     rewrite_driver()->SetBaseUrlForFetch(url);
     GoogleUrl resource_url(url);
     bool unused;
-    ResourcePtr resource(rewrite_driver()->CreateInputResource(resource_url,
-                                                               &unused));
+    ResourcePtr resource(rewrite_driver()->CreateInputResource(
+        resource_url, RewriteDriver::InputRole::kUnknown, &unused));
     if ((resource.get() != NULL) && !ReadIfCached(resource)) {
       resource.clear();
     }
@@ -305,7 +305,8 @@ class ServerContextTest : public RewriteTestBase {
     GoogleUrl gurl(AbsolutifyUrl(url));
     rewrite_driver()->SetBaseUrlForFetch(kTestDomain);
     bool unused;
-    ResourcePtr resource(rewrite_driver()->CreateInputResource(gurl, &unused));
+    ResourcePtr resource(rewrite_driver()->CreateInputResource(
+        gurl, RewriteDriver::InputRole::kUnknown, &unused));
     VerifyContentsCallback callback(resource, "payload");
     resource->LoadAsync(Resource::kLoadEvenIfNotCacheable,
                         rewrite_driver()->request_context(),
@@ -321,7 +322,8 @@ class ServerContextTest : public RewriteTestBase {
     SetCustomCachingResponse(url, 100, "foo");
     GoogleUrl gurl(AbsolutifyUrl(url));
     bool unused;
-    ResourcePtr resource(rewrite_driver()->CreateInputResource(gurl, &unused));
+    ResourcePtr resource(rewrite_driver()->CreateInputResource(
+        gurl, RewriteDriver::InputRole::kImg, &unused));
     if (!is_background_fetch) {
       rewrite_driver()->SetRequestHeaders(*headers);
     }
@@ -1276,7 +1278,7 @@ TEST_F(BeaconTest, BasicPcacheSetup) {
 TEST_F(BeaconTest, HandleBeaconRenderedDimensionsofImages) {
   GoogleString img1 = "http://www.example.com/img1.png";
   GoogleString hash1 = IntegerToString(
-      HashString<CasePreserve, int>(img1.c_str(), img1.size()));
+      HashString<CasePreserve, unsigned>(img1.c_str(), img1.size()));
   options()->EnableFilter(RewriteOptions::kResizeToRenderedImageDimensions);
   RenderedImages rendered_images;
   RenderedImages_Image* images = rendered_images.add_image();
@@ -1299,9 +1301,9 @@ TEST_F(BeaconTest, HandleBeaconCritImages) {
   GoogleString img1 = "http://www.example.com/img1.png";
   GoogleString img2 = "http://www.example.com/img2.png";
   GoogleString hash1 = IntegerToString(
-      HashString<CasePreserve, int>(img1.c_str(), img1.size()));
+      HashString<CasePreserve, unsigned>(img1.c_str(), img1.size()));
   GoogleString hash2 = IntegerToString(
-      HashString<CasePreserve, int>(img2.c_str(), img2.size()));
+      HashString<CasePreserve, unsigned>(img2.c_str(), img2.size()));
 
   StringSet critical_image_hashes;
   critical_image_hashes.insert(hash1);
@@ -1705,8 +1707,8 @@ TEST_F(ServerContextTest, PartlyFailedFetch) {
   GoogleUrl gurl(abs_url);
   SetBaseUrlForFetch(abs_url);
   bool is_authorized;
-  ResourcePtr resource = rewrite_driver()->CreateInputResource(gurl,
-                                                               &is_authorized);
+  ResourcePtr resource = rewrite_driver()->CreateInputResource(
+      gurl, RewriteDriver::InputRole::kStyle, &is_authorized);
   ASSERT_TRUE(resource.get() != NULL);
   EXPECT_TRUE(is_authorized);
   MockResourceCallback callback(resource, factory()->thread_system());
@@ -1736,15 +1738,16 @@ TEST_F(ServerContextTest, LoadFromFileReadAsync) {
 
   SetBaseUrlForFetch("http://test.com");
   bool unused;
-  ResourcePtr resource(rewrite_driver()->CreateInputResource(test_url,
-                                                             &unused));
+  ResourcePtr resource(rewrite_driver()->CreateInputResource(
+      test_url, RewriteDriver::InputRole::kStyle, &unused));
   VerifyContentsCallback callback(resource, kContents);
   resource->LoadAsync(Resource::kReportFailureIfNotCacheable,
                       rewrite_driver()->request_context(),
                       &callback);
   callback.AssertCalled();
 
-  resource = rewrite_driver()->CreateInputResource(test_url, &unused);
+  resource = rewrite_driver()->CreateInputResource(
+      test_url, RewriteDriver::InputRole::kStyle, &unused);
   VerifyContentsCallback callback2(resource, kContents);
   resource->LoadAsync(Resource::kReportFailureIfNotCacheable,
                       rewrite_driver()->request_context(),
@@ -1784,7 +1787,8 @@ TEST_F(ServerContextTest, FillInPartitionInputInfo) {
   SetFetchResponse(kUrl, headers, kContents);
   GoogleUrl gurl(kUrl);
   bool unused;
-  ResourcePtr resource(rewrite_driver()->CreateInputResource(gurl, &unused));
+  ResourcePtr resource(rewrite_driver()->CreateInputResource(
+      gurl, RewriteDriver::InputRole::kUnknown, &unused));
   VerifyContentsCallback callback(resource, kContents);
   resource->LoadAsync(Resource::kReportFailureIfNotCacheable,
                       rewrite_driver()->request_context(),

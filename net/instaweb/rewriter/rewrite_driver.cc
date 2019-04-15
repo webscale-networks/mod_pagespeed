@@ -238,6 +238,7 @@ RewriteDriver::RewriteDriver(MessageHandler* message_handler,
     : HtmlParse(message_handler),
       base_was_set_(false),
       refs_before_base_(false),
+      other_base_problem_(false),
       filters_added_(false),
       externally_managed_(false),
       ref_counts_(this),
@@ -452,6 +453,7 @@ void RewriteDriver::Clear() NO_THREAD_SAFETY_ANALYSIS {
   is_lazyload_script_flushed_ = false;
   base_was_set_ = false;
   refs_before_base_ = false;
+  other_base_problem_ = false;
   containing_charset_.clear();
   fully_rewrite_on_flush_ = false;
   fast_blocking_rewrite_ = true;
@@ -487,6 +489,8 @@ void RewriteDriver::Clear() NO_THREAD_SAFETY_ANALYSIS {
   STLDeleteElements(&owned_url_async_fetchers_);
   ClearRequestProperties();
   user_agent_.clear();
+
+  csp_context_.Clear();
 }
 
 // Must be called with rewrite_mutex() held.
@@ -814,6 +818,9 @@ void RewriteDriver::FlushAsyncDone(int num_rewrites, Function* callback) {
     slots_.clear();
     inline_slots_.clear();
     inline_attribute_slots_.clear();
+    for(auto c : srcset_collections_) {
+      c->Detach();
+    }
     srcset_collections_.clear();
   }
 
@@ -2010,16 +2017,18 @@ bool RewriteDriver::MatchesBaseUrl(const GoogleUrl& input_url) const {
 }
 
 ResourcePtr RewriteDriver::CreateInputResource(const GoogleUrl& input_url,
+                                               InputRole role,
                                                bool* is_authorized) {
   return CreateInputResource(
       input_url, kInlineOnlyAuthorizedResources, kIntendedForGeneral,
-      is_authorized);
+      role, is_authorized);
 }
 
 ResourcePtr RewriteDriver::CreateInputResource(
     const GoogleUrl& input_url,
     InlineAuthorizationPolicy inline_authorization_policy,
     IntendedFor intended_for,
+    InputRole role,
     bool* is_authorized) {
   *is_authorized = true;  // Must be false iff we fail b/c of authorization.
   ResourcePtr resource;
@@ -2031,6 +2040,13 @@ ResourcePtr RewriteDriver::CreateInputResource(
     // to have bit-rotted since it was disabled.
     return resource;
   } else if (decoded_base_url_.IsAnyValid()) {
+    if (!IsLoadPermittedByCsp(input_url, role)) {
+      *is_authorized = false;
+      message_handler()->Message(kInfo, "CSP prevents use of '%s'",
+                                input_url.spec_c_str());
+      return resource;
+    }
+
     may_rewrite = MayRewriteUrl(decoded_base_url_, input_url,
                                 inline_authorization_policy,
                                 intended_for,
@@ -2186,7 +2202,8 @@ bool RewriteDriver::StartParseId(const StringPiece& url, const StringPiece& id,
 void RewriteDriver::ParseTextInternal(const char* content, int size) {
   num_bytes_in_ += size;
   if (ShouldSkipParsing()) {
-    writer()->Write(content, message_handler());
+    StringPiece sp(content, size);
+    writer()->Write(sp, message_handler());
   } else if (debug_filter_ != NULL) {
     debug_filter_->StartParse();
     HtmlParse::ParseTextInternal(content, size);
@@ -2245,7 +2262,7 @@ void RewriteDriver::SignalIfRequired(bool result_of_prepare_should_signal) {
 }
 
 void RewriteDriver::RewriteComplete(RewriteContext* rewrite_context,
-                                    bool permit_render) {
+                                    RenderOp render_op) {
   {
     ScopedMutex lock(rewrite_mutex());
     DCHECK_EQ(0, ref_counts_.QueryCountMutexHeld(kRefFetchUserFacing));
@@ -2283,7 +2300,10 @@ void RewriteDriver::RewriteComplete(RewriteContext* rewrite_context,
     // release_driver_ should be false since we moved a count between
     // categories, and didn't change the total.
     DCHECK(!release_driver_) << ref_counts_.DebugStringMutexHeld();
-    rewrite_context->Propagate(attached && permit_render);
+    if (!attached) {
+      render_op = RenderOp::kDontRender;
+    }
+    rewrite_context->Propagate(render_op);
     SignalIfRequired(signal_cookie);
   }
 }
@@ -3256,18 +3276,19 @@ void RewriteDriver::InsertDebugComments(
   }
 }
 
-void RewriteDriver::InsertUnauthorizedDomainDebugComment(StringPiece url,
-                                                         HtmlElement* element) {
+void RewriteDriver::InsertUnauthorizedDomainDebugComment(
+    StringPiece url, InputRole role, HtmlElement* element) {
   if (DebugMode() && element != NULL && IsRewritable(element)) {
     GoogleUrl gurl(url);
     InsertNodeAfterNode(
-        element, NewCommentNode(element->parent(),
-                                GenerateUnauthorizedDomainDebugComment(gurl)));
+        element,
+        NewCommentNode(element->parent(),
+                       GenerateUnauthorizedDomainDebugComment(gurl, role)));
   }
 }
 
 GoogleString RewriteDriver::GenerateUnauthorizedDomainDebugComment(
-    const GoogleUrl& gurl) {
+    const GoogleUrl& gurl, InputRole role) {
   GoogleString comment("The preceding resource was not rewritten because ");
   // Note: this is all being defensive - at the time of writing I believe
   // url will always be a valid URL.
@@ -3275,6 +3296,8 @@ GoogleString RewriteDriver::GenerateUnauthorizedDomainDebugComment(
     StrAppend(&comment, "its domain (", gurl.Host(), ") is not authorized");
   } else if (gurl.IsWebOrDataValid()) {
     StrAppend(&comment, "it is a data URI");
+  } else if (!IsLoadPermittedByCsp(gurl, role)) {
+    StrAppend(&comment, "CSP disallows its fetch");
   } else {
     StrAppend(&comment, "it is not authorized");
   }
@@ -3539,6 +3562,34 @@ void RewriteDriver::SetIsAmpDocument(bool is_amp) {
   }
   is_amp_ = is_amp;
   set_buffer_events(false);
+}
+
+bool RewriteDriver::IsLoadPermittedByCsp(
+    const GoogleUrl& url, CspDirective role) {
+  if (csp_context_.empty()) {
+    return true;
+  }
+
+  return csp_context_.CanLoadUrl(role, google_url(), url);
+}
+
+bool RewriteDriver::IsLoadPermittedByCsp(const GoogleUrl& url, InputRole role) {
+  switch (role) {
+    case InputRole::kScript:
+      return IsLoadPermittedByCsp(url, CspDirective::kScriptSrc);
+    case InputRole::kStyle:
+      return IsLoadPermittedByCsp(url, CspDirective::kStyleSrc);
+    case InputRole::kImg:
+      return IsLoadPermittedByCsp(url, CspDirective::kImgSrc);
+    case InputRole::kUnknown:
+      // Weird type, not sure what policy to check.
+      return csp_context_.empty();
+    case InputRole::kReconstruction:
+      // All OK.
+      return true;
+  }
+  LOG(DFATAL) << "Weird input as role= to IsLoadPermittedByCsp";
+  return false;
 }
 
 }  // namespace net_instaweb

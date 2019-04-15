@@ -526,7 +526,7 @@ ModPagespeedCompressMetadataCache true
 # different depending on whether we are running system tests as root
 # or as a normal user.  Note that fetches must be done with
 #    http_proxy=SECONDARY_HOST:SECONDARY_PORT.
-Listen localhost:@@APACHE_SECONDARY_PORT@@
+Listen *:@@APACHE_SECONDARY_PORT@@
 NameVirtualHost localhost:@@APACHE_SECONDARY_PORT@@
 <VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
   ServerName secondary.example.com
@@ -666,6 +666,38 @@ NameVirtualHost localhost:@@APACHE_SECONDARY_PORT@@
   # webserver would take.
   ModPagespeedLoadFromFile "http://lff-large-files-no-fallback.example.com/" \
                            "@@APACHE_DOC_ROOT@@/mod_pagespeed_example/styles/"
+</VirtualHost>
+
+<VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
+  ServerName pagespeed-off.example.com
+  DocumentRoot "@@APACHE_DOC_ROOT@@"
+  ModPagespeedFileCachePath "@@MOD_PAGESPEED_CACHE@@"
+  ModPagespeed off
+  ModPagespeedEnableFilters collapse_whitespace
+</VirtualHost>
+
+<VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
+  ServerName pagespeed-on.example.com
+  DocumentRoot "@@APACHE_DOC_ROOT@@"
+  ModPagespeedFileCachePath "@@MOD_PAGESPEED_CACHE@@"
+  ModPagespeed on
+  ModPagespeedEnableFilters collapse_whitespace
+</VirtualHost>
+
+<VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
+  ServerName pagespeed-unplugged.example.com
+  DocumentRoot "@@APACHE_DOC_ROOT@@"
+  ModPagespeedFileCachePath "@@MOD_PAGESPEED_CACHE@@"
+  ModPagespeed unplugged
+  ModPagespeedEnableFilters collapse_whitespace
+</VirtualHost>
+
+<VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
+  ServerName pagespeed-standby.example.com
+  DocumentRoot "@@APACHE_DOC_ROOT@@"
+  ModPagespeedFileCachePath "@@MOD_PAGESPEED_CACHE@@"
+  ModPagespeed standby
+  ModPagespeedEnableFilters collapse_whitespace
 </VirtualHost>
 
 # Set the value of the X-Mod-Pagespeed header
@@ -1900,7 +1932,7 @@ ModPagespeedMessagesDomains Allow localhost
 
   # Share a cache keyspace with embed-config-resources.example.com.
   ModPagespeedCacheFragment "embed-config"
-
+  ModPagespeedRewriteDeadlinePerFlushMs 5000
   ModPagespeedLoadFromFile "http://embed-config-resources.example.com/" \
       "@@APACHE_DOC_ROOT@@/mod_pagespeed_example/"
 </VirtualHost>
@@ -2102,6 +2134,16 @@ Listen 127.0.0.2:@@APACHE_TERTIARY_PORT@@
   ModPagespeedCriticalImagesBeaconEnabled false
 </VirtualHost>
 
+# Test image rewrites for parent,child nodes and flush.
+<VirtualHost localhost:@@APACHE_SECONDARY_PORT@@>
+  ServerName image-rewrite-with-flush.example.com
+  DocumentRoot "@@APACHE_DOC_ROOT@@"
+  ModPagespeedFileCachePath "@@MOD_PAGESPEED_CACHE@@"
+  ModPagespeedRewriteLevel PassThrough
+  ModPagespeedUrlValuedAttribute li data-thumb image
+  ModPagespeedEnableFilters core
+</VirtualHost>
+
 # In case the system has not added webp as an installed mimetype, this
 # is needed to allow automatic/system_tests/resource_content_type_html.sh
 # to work, as that is needed for
@@ -2211,6 +2253,7 @@ AddType application/javascript .js
 #ALL_DIRECTIVES ModPagespeedRedisServer localhost:55555
 #ALL_DIRECTIVES ModPagespeedRedisReconnectionDelayMs 1000
 #ALL_DIRECTIVES ModPagespeedRedisTimeoutUs 50000
+#ALL_DIRECTIVES ModPagespeedRedisDatabaseIndex 0
 #ALL_DIRECTIVES ModPagespeedReportUnloadTime true
 #ALL_DIRECTIVES ModPagespeedRespectVary true
 #ALL_DIRECTIVES ModPagespeedRespectXForwardedProto off

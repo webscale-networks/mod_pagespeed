@@ -220,7 +220,8 @@ class JsCombineFilter::Context : public RewriteContext {
   // Create and add the slot that corresponds to this element.
   bool AddElement(HtmlElement* element, HtmlElement::Attribute* href) {
     ResourcePtr resource(filter_->CreateInputResourceOrInsertDebugComment(
-        href->DecodedValueOrNull(), element));
+        href->DecodedValueOrNull(), RewriteDriver::InputRole::kScript,
+        element));
     if (resource.get() == NULL) {
       return false;
     }
@@ -331,6 +332,10 @@ class JsCombineFilter::Context : public RewriteContext {
       }
     }
     RewriteDone(result, partition_index);
+  }
+
+  bool PolicyPermitsRendering() const {
+    return AreOutputsAllowedByCsp(CspDirective::kScriptSrc);
   }
 
   // For every partition, write a new script tag that points to the
@@ -625,6 +630,13 @@ void JsCombineFilter::Flush() {
 // reset.
 void JsCombineFilter::ConsiderJsForCombination(HtmlElement* element,
                                                HtmlElement::Attribute* src) {
+  if (!driver()->content_security_policy().PermitsEval()) {
+    driver()->InsertDebugComment(
+        "Not considering JS combining since CSP forbids eval", element);
+    context_->Reset();
+    return;
+  }
+
   // Worst-case scenario is if we somehow ended up with nested scripts.
   // In this case, we just give up entirely.
   if (script_depth_ > 0) {
@@ -727,7 +739,8 @@ JsCombineFilter::JsCombiner* JsCombineFilter::combiner() const {
 // In sync flow, just write out what we have so far, and then
 // reset the context.
 void JsCombineFilter::NextCombination() {
-  if (!context_->empty()) {
+  if (!context_->empty() &&
+      driver()->content_security_policy().PermitsEval()) {
     driver()->InitiateRewrite(context_.release());
     context_.reset(MakeContext());
   }

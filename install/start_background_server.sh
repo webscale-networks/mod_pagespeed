@@ -1,5 +1,19 @@
 #!/bin/bash
 #
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Helping script which runs arbitrary server process (e.g. memcached or
 # redis-server) in a temporary directory on random available port.
 #
@@ -82,7 +96,7 @@ while [[ -z "$SERVER_PORT" ]]; do
   SERVER_PORT=$((($RANDOM % 31744) + 1024))
 
   # First check netstat -tan to see if somone is already listening on this port.
-  if nenstat -tan 2>/dev/null | grep --quiet ":$SERVER_PORT .* LISTEN"; then
+  if netstat -tan 2>/dev/null | grep --quiet ":$SERVER_PORT .* LISTEN"; then
     continue
   fi
 

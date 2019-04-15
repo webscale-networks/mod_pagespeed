@@ -1,3 +1,18 @@
+#!/bin/bash
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 test_filter prioritize_critical_css
 
 start_test no critical selectors chosen from unauthorized resources
@@ -19,7 +34,7 @@ check_not fgrep -q "interesting_color" $FETCH_FILE
 check [ $(fgrep -c "non_flattened_selector" $FETCH_FILE) -eq 1 ]
 EXPECTED_IMPORT_FAILURE_LINE="<!--Flattening failed: Cannot import http://www.google.com/css/maia.css as it is on an unauthorized domain-->"
 check [ $(grep -o "$EXPECTED_IMPORT_FAILURE_LINE" $FETCH_FILE | wc -l) -eq 1 ]
-EXPECTED_COMMENT_LINE="<!--The preceding resource was not rewritten because its domain (cse.google.com) is not authorized-->"
+EXPECTED_COMMENT_LINE="<!--The preceding resource was not rewritten because its domain (www.modpagespeed.com) is not authorized-->"
 check [ $(grep -o "$EXPECTED_COMMENT_LINE" $FETCH_FILE | wc -l) -eq 1 ]
 
 start_test inline_unauthorized_resources allows unauthorized css selectors

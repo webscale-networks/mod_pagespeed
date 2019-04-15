@@ -31,6 +31,7 @@
 #include "net/instaweb/rewriter/cached_result.pb.h"
 #include "net/instaweb/rewriter/public/critical_images_finder.h"
 #include "net/instaweb/rewriter/public/critical_selector_finder.h"
+#include "net/instaweb/rewriter/public/csp.h"
 #include "net/instaweb/rewriter/public/downstream_cache_purger.h"
 #include "net/instaweb/rewriter/public/inline_attribute_slot.h"
 #include "net/instaweb/rewriter/public/inline_resource_slot.h"
@@ -605,12 +606,28 @@ class RewriteDriver : public HtmlParse {
                                         kind, failure_reason);
   }
 
+  // How the input will be used in the page; relevant for checking against
+  // Content-Security-Policy.
+  enum class InputRole {
+    kScript,
+    kStyle,
+    kImg,
+    // Something where we don't know for sure; has to be handled
+    // extra-conservatively.
+    kUnknown,
+    // Special role for resource reconstruction. This will be unchecked since
+    // the original resource path should be checked on the web page with
+    // appropriate policy.
+    kReconstruction,
+  };
+
   // Creates an input resource based on input_url.  Returns NULL if the input
   // resource url isn't valid or is a data url, or can't legally be rewritten
   // in the context of this page, in which case *is_authorized will be false.
   // Assumes that resources from unauthorized domains may not be rewritten and
   // that the resource is not intended exclusively for inlining.
   ResourcePtr CreateInputResource(const GoogleUrl& input_url,
+                                  InputRole role,
                                   bool* is_authorized);
 
   // Creates an input resource.  Returns NULL if the input resource url isn't
@@ -632,6 +649,7 @@ class RewriteDriver : public HtmlParse {
       const GoogleUrl& input_url,
       InlineAuthorizationPolicy inline_authorization_policy,
       IntendedFor intended_for,
+      InputRole role,
       bool* is_authorized);
 
   // Creates an input resource from the given absolute url.  Requires that the
@@ -685,13 +703,17 @@ class RewriteDriver : public HtmlParse {
   RewriteFilter* FindFilter(const StringPiece& id) const;
 
   // Returns refs_before_base.
-  bool refs_before_base() { return refs_before_base_; }
+  bool refs_before_base() const { return refs_before_base_; }
+  bool other_base_problem() const { return other_base_problem_; }
 
   // Sets whether or not there were references to urls before the
   // base tag (if there is a base tag).  This variable has document-level
   // scope.  It is reset at the beginning of every document by
   // ScanFilter.
   void set_refs_before_base() { refs_before_base_ = true; }
+
+  // Sets if we had other difficulty handling <base> tag.
+  void set_other_base_problem() { other_base_problem_ = true; }
 
   // Get/set the charset of the containing HTML page. See scan_filter.cc for
   // an explanation of how this is determined, but NOTE that the determined
@@ -755,7 +777,7 @@ class RewriteDriver : public HtmlParse {
   //
   // If 'permit_render' is false, no rendering will be asked for even if
   // the context is still attached.
-  void RewriteComplete(RewriteContext* rewrite_context, bool permit_render);
+  void RewriteComplete(RewriteContext* rewrite_context, RenderOp permit_render);
 
   // Provides a mechanism for a RewriteContext to notify a
   // RewriteDriver that a certain number of rewrites have been discovered
@@ -1124,11 +1146,12 @@ class RewriteDriver : public HtmlParse {
       const protobuf::RepeatedPtrField<GoogleString>& unescaped_messages,
       HtmlElement* element);
   void InsertUnauthorizedDomainDebugComment(StringPiece url,
+                                            InputRole role,
                                             HtmlElement* element);
 
   // Generates an unauthorized domain debug comment. Public for unit tests.
-  static GoogleString GenerateUnauthorizedDomainDebugComment(
-      const GoogleUrl& gurl);
+  GoogleString GenerateUnauthorizedDomainDebugComment(
+      const GoogleUrl& gurl, InputRole role);
 
   // log_record() always returns a pointer to a valid AbstractLogRecord, owned
   // by the rewrite_driver's request context.
@@ -1231,6 +1254,11 @@ class RewriteDriver : public HtmlParse {
   // inject scripts.
   void SetIsAmpDocument(bool is_amp);
   bool is_amp_document() const { return is_amp_; }
+
+  const CspContext& content_security_policy() const { return csp_context_; }
+  CspContext* mutable_content_security_policy() { return &csp_context_; }
+  bool IsLoadPermittedByCsp(const GoogleUrl& url, InputRole role);
+  bool IsLoadPermittedByCsp(const GoogleUrl& url, CspDirective role);
 
  protected:
   virtual void DetermineFiltersBehaviorImpl();
@@ -1416,6 +1444,9 @@ class RewriteDriver : public HtmlParse {
   // no base tag, this should be false.  If the base tag is before all
   // other url references, this should also be false.
   bool refs_before_base_;
+
+  // Stores if we had to reject the <base> tag for some reason.
+  bool other_base_problem_;
 
   // The charset of the containing HTML page.
   GoogleString containing_charset_;
@@ -1729,6 +1760,9 @@ class RewriteDriver : public HtmlParse {
 
   // Any PageSpeed option cookies from the original request.
   GoogleString pagespeed_option_cookies_;
+
+  // Currently active Content-Security-Policy
+  CspContext csp_context_;
 
   DISALLOW_COPY_AND_ASSIGN(RewriteDriver);
 };

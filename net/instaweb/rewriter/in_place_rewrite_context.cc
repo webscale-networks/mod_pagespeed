@@ -139,6 +139,10 @@ void RecordingFetch::HandleHeadersComplete() {
       // kNotInCacheStatus instead to fall back to the server's native method of
       // serving the url and indicate we do want it recorded.
       if (!response_headers()->IsErrorStatus()) {
+        // Clear the response headers to ensure stray headers do not end up
+        // being put on the wire:
+        // https://github.com/pagespeed/mod_pagespeed/issues/1496
+        response_headers()->Clear();
         response_headers()->set_status_code(
             CacheUrlAsyncFetcher::kNotInCacheStatus);
       }
@@ -304,6 +308,11 @@ int64 InPlaceRewriteContext::GetRewriteDeadlineAlarmMs() const {
   return RewriteContext::GetRewriteDeadlineAlarmMs();
 }
 
+bool InPlaceRewriteContext::PolicyPermitsRendering() const {
+  // Doesn't realy render, so output check isn't relevant.
+  return true;
+}
+
 void InPlaceRewriteContext::Harvest() {
   if (num_nested() == 1) {
     RewriteContext* const nested_context = nested(0);
@@ -398,8 +407,15 @@ void InPlaceRewriteContext::FixFetchFallbackHeaders(
       headers->Replace(HttpAttributes::kEtag, HTTPCache::FormatEtag(StrCat(
                                                   id(), "-", rewritten_hash_)));
     }
+
+    // Determine if we need to use the implicit cache ttl ms or the implicit
+    // load from file cache ttl ms.
+    int64 implicit_ttl_ms = IsLoadFromFileBased() ?
+        Options()->load_from_file_cache_ttl_ms() :
+        Options()->implicit_cache_ttl_ms();
+
     headers->RemoveAll(HttpAttributes::kLastModified);
-    headers->set_implicit_cache_ttl_ms(Options()->implicit_cache_ttl_ms());
+    headers->set_implicit_cache_ttl_ms(implicit_ttl_ms);
     headers->ComputeCaching();
     int64 expire_at_ms = kint64max;
     int64 date_ms = kint64max;
@@ -448,6 +464,16 @@ void InPlaceRewriteContext::RemoveRedundantRelCanonicalHeader(
     const CachedResult& cached_result, ResponseHeaders* headers) {
   headers->Remove(HttpAttributes::kLink,
                   ResponseHeaders::RelCanonicalHeaderValue(url_));
+}
+
+bool InPlaceRewriteContext::IsLoadFromFileBased() {
+  if (num_slots() == 1) {
+    ResourcePtr resource(slot(0)->resource());
+    if (!resource->UseHttpCache()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void InPlaceRewriteContext::UpdateDateAndExpiry(

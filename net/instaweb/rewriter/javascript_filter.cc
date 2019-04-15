@@ -54,6 +54,9 @@ namespace net_instaweb {
 
 namespace {
 
+const char kInlineCspMessage[] =
+    "Avoiding modifying inline script with CSP present";
+
 void CleanupWhitespaceScriptBody(RewriteDriver* driver,
                                  HtmlCharactersNode* node) {
   // Note that an external script tag might contain body data.  We erase this
@@ -239,6 +242,10 @@ class JavascriptFilter::Context : public SingleRewriteContext {
       TracePrintf("RewriteJs: %s", input->url().c_str());
     }
     RewriteDone(RewriteJavascript(input, output), 0);
+  }
+
+  bool PolicyPermitsRendering() const override {
+    return AreOutputsAllowedByCsp(CspDirective::kScriptSrc);
   }
 
   void Render() override {
@@ -439,6 +446,12 @@ void JavascriptFilter::InitializeConfigIfNecessary() {
 }
 
 void JavascriptFilter::RewriteInlineScript(HtmlCharactersNode* body_node) {
+  if (driver()->content_security_policy().HasDirectiveOrDefaultSrc(
+        CspDirective::kScriptSrc)) {
+    driver()->InsertDebugComment(kInlineCspMessage, body_node->parent());
+    return;
+  }
+
   // Log rewriter activity
   // First buffer up script data and minify it.
   GoogleString* script = body_node->mutable_contents();
@@ -481,7 +494,7 @@ void JavascriptFilter::RewriteExternalScript(
     HtmlElement* script_in_progress, HtmlElement::Attribute* script_src) {
   const StringPiece script_url(script_src->DecodedValueOrNull());
   ResourcePtr resource(CreateInputResourceOrInsertDebugComment(
-      script_url, script_in_progress));
+      script_url, RewriteDriver::InputRole::kScript, script_in_progress));
   if (resource.get() == nullptr) {
     return;
   }

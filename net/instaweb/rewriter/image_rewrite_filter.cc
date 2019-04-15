@@ -405,6 +405,7 @@ class ImageRewriteFilter::Context : public SingleRewriteContext {
             is_resized_using_rendered_dimensions) {}
   virtual ~Context() {}
 
+  bool PolicyPermitsRendering() const override;
   virtual void Render();
   virtual void RewriteSingle(const ResourcePtr& input,
                              const OutputResourcePtr& output);
@@ -561,6 +562,10 @@ void ImageRewriteFilter::Context::RewriteSingle(
   FindServerContext()->central_controller()->ScheduleExpensiveOperation(
       new InvokeRewriteFunction(this, filter_, input_resource,
                                 output_resource));
+}
+
+bool ImageRewriteFilter::Context::PolicyPermitsRendering() const {
+  return AreOutputsAllowedByCsp(CspDirective::kImgSrc);
 }
 
 void ImageRewriteFilter::Context::Render() {
@@ -1481,7 +1486,7 @@ void ImageRewriteFilter::BeginRewriteImageUrl(HtmlElement* element,
   EncodeUserAgentIntoResourceContext(resource_context.get());
 
   ResourcePtr input_resource(CreateInputResourceOrInsertDebugComment(
-      src->DecodedValueOrNull(), element));
+      src->DecodedValueOrNull(), RewriteDriver::InputRole::kImg, element));
   if (input_resource.get() == NULL) {
     return;
   }
@@ -2038,10 +2043,7 @@ InlineResult ImageRewriteFilter::TryInline(bool is_html, bool is_critical,
     int64 image_inline_max_bytes, const CachedResult* cached_result,
     ResourceSlot* slot, GoogleString* data_url) {
   int32 image_type_value = cached_result->inlined_image_type();
-  if ((image_type_value < IMAGE_UNKNOWN) ||
-      (image_type_value > IMAGE_WEBP_LOSSLESS_OR_ALPHA)) {
-    // IMAGE_UNKNOWN and IMAGE_WEBP_LOSSLESS_OR_ALPHA must be the smallest
-    // and largest values, respectively, in ImageType enum.
+  if (!ImageType_IsValid(image_type_value)) {
     LOG(DFATAL) << "Invalid inlined_image_type in cached_result";
     return INLINE_INTERNAL_ERROR;
   }
@@ -2092,11 +2094,8 @@ InlineResult ImageRewriteFilter::TryInline(bool is_html, bool is_critical,
   return INLINE_SUCCESS;
 }
 
-void ImageRewriteFilter::EndElementImpl(HtmlElement* element) {
-  // Don't rewrite if the image is broken by a flush.
-  if (driver()->HasChildrenInFlushWindow(element)) {
-    return;
-  }
+void ImageRewriteFilter::StartElementImpl(HtmlElement* element) {
+
   // Don't rewrite if there is a pagespeed_no_transform or
   // data-pagespeed-no-transform attribute.
   if (element->FindAttribute(HtmlName::kDataPagespeedNoTransform)) {

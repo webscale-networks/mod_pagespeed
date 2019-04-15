@@ -1,5 +1,19 @@
 #!/bin/bash
-# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Copyright 2016 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Author: cheesy@google.com (Steve Hill)
 #
 # Setup a 32-bit chroot for CentOS.
@@ -40,7 +54,7 @@ if version_compare "$centos_version" -lt 6; then
   release_rpm_url=http://mirror.centos.org/centos/5/os/i386/CentOS/centos-release-5-11.el5.centos.i386.rpm
 elif version_compare "$centos_version" -lt 7; then
   # CentOS 6
-  release_rpm_url=http://mirror.centos.org/centos/6/os/i386/Packages/centos-release-6-8.el6.centos.12.3.i686.rpm
+  release_rpm_url=http://mirror.centos.org/centos/6/os/i386/Packages/centos-release-6-9.el6.12.3.i686.rpm
 else
   # CentOS 7
   release_rpm_url=http://mirror.centos.org/altarch/7/os/i386/Packages/centos-release-7-2.1511.el7.centos.2.9.i686.rpm

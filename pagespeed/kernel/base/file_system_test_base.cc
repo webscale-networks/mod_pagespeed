@@ -518,6 +518,9 @@ void FileSystemTest::TestLockBumping() {
   EXPECT_FALSE(file_system()->TryLockWithTimeout(
       lock_name, Timer::kSecondMs * 3, timer(), &handler_).is_true());
 
+  // Bump the lock again to deflake this test on the CI vm.
+  EXPECT_TRUE(file_system()->BumpLockTimeout(lock_name, &handler_));
+
   // Sleep 2s.  We still hold the lock, because we bumped it.
   timer()->SleepMs(Timer::kSecondMs * 2);
 

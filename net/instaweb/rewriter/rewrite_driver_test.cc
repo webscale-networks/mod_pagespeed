@@ -1235,6 +1235,7 @@ class MockRewriteContext : public SingleRewriteContext {
 
   virtual void RewriteSingle(const ResourcePtr& input,
                              const OutputResourcePtr& output) {}
+  bool PolicyPermitsRendering() const override { return true; }
   virtual const char* id() const { return "mock"; }
   virtual OutputResourceKind kind() const { return kOnTheFlyResource; }
 };
@@ -1283,8 +1284,8 @@ TEST_F(RewriteDriverTest, RejectDataResourceGracefully) {
   MockRewriteContext context(rewrite_driver());
   GoogleUrl dataUrl("data:");
   bool is_authorized;
-  ResourcePtr resource(rewrite_driver()->CreateInputResource(dataUrl,
-                                                             &is_authorized));
+  ResourcePtr resource(rewrite_driver()->CreateInputResource(
+      dataUrl, RewriteDriver::InputRole::kImg, &is_authorized));
   EXPECT_TRUE(resource.get() == NULL);
   EXPECT_TRUE(is_authorized);
 }
@@ -1301,8 +1302,8 @@ TEST_F(RewriteDriverTest, NoCreateInputResourceUnauthorized) {
   // Test that an unauthorized resource is not allowed to be created.
   GoogleUrl unauthorized_url("http://unauthorized.domain.com/a.js");
   bool is_authorized;
-  ResourcePtr resource(rewrite_driver()->CreateInputResource(unauthorized_url,
-                                                             &is_authorized));
+  ResourcePtr resource(rewrite_driver()->CreateInputResource(
+      unauthorized_url, RewriteDriver::InputRole::kScript, &is_authorized));
   EXPECT_TRUE(resource.get() == NULL);
   EXPECT_FALSE(is_authorized);
 
@@ -1313,6 +1314,7 @@ TEST_F(RewriteDriverTest, NoCreateInputResourceUnauthorized) {
       authorized_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource2.get() != NULL);
   EXPECT_TRUE(is_authorized);
@@ -1338,6 +1340,7 @@ TEST_F(RewriteDriverTest, CreateInputResourceUnauthorized) {
       unauthorized_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource.get() != NULL);
   EXPECT_FALSE(is_authorized);
@@ -1351,6 +1354,7 @@ TEST_F(RewriteDriverTest, CreateInputResourceUnauthorized) {
       authorized_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource2.get() != NULL);
   EXPECT_TRUE(is_authorized);
@@ -1363,6 +1367,7 @@ TEST_F(RewriteDriverTest, CreateInputResourceUnauthorized) {
       unauthorized_url,
       RewriteDriver::kInlineOnlyAuthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource3.get() == NULL);
   EXPECT_FALSE(is_authorized);
@@ -1370,7 +1375,8 @@ TEST_F(RewriteDriverTest, CreateInputResourceUnauthorized) {
   // Test that an unauthorized resource is not created with the default
   // CreateInputResource call.
   ResourcePtr resource4(
-      rewrite_driver()->CreateInputResource(unauthorized_url, &is_authorized));
+      rewrite_driver()->CreateInputResource(
+          unauthorized_url, RewriteDriver::InputRole::kScript, &is_authorized));
   EXPECT_TRUE(resource4.get() == NULL);
   EXPECT_FALSE(is_authorized);
 }
@@ -1393,6 +1399,7 @@ TEST_F(RewriteDriverTest, CreateInputResourceUnauthorizedWithDisallow) {
       unauthorized_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource.get() == NULL);
   EXPECT_FALSE(is_authorized);
@@ -1415,6 +1422,7 @@ TEST_F(RewriteDriverTest, AllowWhenInliningOverridesDisallow) {
       js_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForInlining,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_FALSE(resource.get() == NULL);
   EXPECT_TRUE(is_authorized);
@@ -1437,6 +1445,7 @@ TEST_F(RewriteDriverTest, AllowWhenInliningDoesntOverrideDisallow) {
       js_url,
       RewriteDriver::kInlineUnauthorizedResources,
       RewriteDriver::kIntendedForGeneral,
+      RewriteDriver::InputRole::kScript,
       &is_authorized));
   EXPECT_TRUE(resource.get() == NULL);
   EXPECT_FALSE(is_authorized);
@@ -2296,6 +2305,42 @@ TEST_F(DownstreamCacheWithNoPossiblePurgeTest, DownstreamCacheNoInitRewrites) {
   EXPECT_EQ(0, counting_url_async_fetcher()->fetch_count());
   EXPECT_EQ(0, factory()->rewrite_stats()->
                    downstream_cache_purge_attempts()->Get());
+}
+
+class DriverCleanupWithUnhealthyCacheTest : public RewriteDriverTest {
+ protected:
+  void SetUp() override {
+    options()->SetRewriteLevel(RewriteOptions::kCoreFilters);
+    options()->set_honor_csp(true);
+    SetUseManagedRewriteDrivers(true);
+    RewriteDriverTest::SetUp();
+  }
+
+  void TearDown() override {
+    // We need to clean up the other rewrite driver manually since we don't
+    // parse anything through it --- NewRewriteDriver is called, but nothing
+    // else is done otherwise.
+    other_rewrite_driver()->Cleanup();
+    RewriteDriverTest::TearDown();
+  }
+};
+
+// Regression test for https://github.com/pagespeed/ngx_pagespeed/issues/1514
+// This shouldn't segfailt
+TEST_F(DriverCleanupWithUnhealthyCacheTest, NoLeakNoSegfault) {
+  lru_cache()->ShutDown();
+  RequestHeaders request_headers;
+  rewrite_driver()->SetRequestHeaders(request_headers);
+  // Set up a arbitrary response for the png we reference in the html.
+  SetResponseWithDefaultHeaders("1.png", kContentTypePng, "doesnotmatter", 100);
+  GoogleString input_html("<img src=1.png  srcset='1.png 1.5x, 1.png 2x,1.png'/>");
+  // Since we want to call both FinishParse() and WaitForCompletion() (it's
+  // inside CallFetcherCallbacksForDriver) on a managed rewrite driver,
+  // we have to pin it, since otherwise FinishParse will drop our last
+  // reference.
+  rewrite_driver()->AddUserReference();
+  ParseUrl(kTestDomain, input_html);
+  rewrite_driver()->Cleanup();
 }
 
 }  // namespace
