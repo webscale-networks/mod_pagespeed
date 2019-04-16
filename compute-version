@@ -33,7 +33,7 @@
 BRANCH_NAME=$1
 
 PAGESPEED_VERSION=$(. net/instaweb/public/VERSION &&
-   echo $MAJOR.$MINOR.$BUILD.$PATCH)
+   echo v$MAJOR.$MINOR.$BUILD.$PATCH)
 RELEASE_BRANCH=webscale-$PAGESPEED_VERSION
 if [ "$BRANCH_NAME" = "$RELEASE_BRANCH" ]; then
   git fetch --tags
@@ -41,7 +41,7 @@ if [ "$BRANCH_NAME" = "$RELEASE_BRANCH" ]; then
   if [ -n "$PRODUCT_VERSION" ]; then
     # A tag points to the tip of this branch already. Do not create another
     # one, as this is just an indicator that the previous tag build failed.
-    REVISION=${PRODUCT_VERSION#$BRANCHE_NAME-}
+    REVISION=${PRODUCT_VERSION#$BRANCH_NAME-}
   else
     # The head is not tagged, create a new tag
     LAST_TAG=$(git describe --tags --abbrev=0 remotes/origin/$BRANCH_NAME 2>/dev/null)
