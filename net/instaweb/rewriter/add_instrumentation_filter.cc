@@ -214,6 +214,7 @@ GoogleString AddInstrumentationFilter::GetScriptJs(StringPiece event) {
         driver()->response_headers()->status_code()));
   }
   // Append the request id.
+  LOG(WARNING) << "Request ID to use for beacon: " << driver()->request_context()->request_id();
   if (driver()->request_context()->request_id() > 0) {
     StrAppend(&extra_params, "&id=", Integer64ToString(
         driver()->request_context()->request_id()));

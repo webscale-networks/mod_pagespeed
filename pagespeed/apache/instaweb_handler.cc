@@ -122,11 +122,13 @@ InstawebHandler::InstawebHandler(request_rec* request)
   // in the request context.
   const char* request_id = apr_table_get(request->notes, "REQUEST_ID");
   if (request_id) {
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
-      "Request ID value from request context: %s", request_id);
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request->server,
+      "Setting request ID value from request context: %s", request_id);
     int64 req_id = strtoll(request_id, NULL, 10);
     request_context_->set_request_id(req_id);
   }
+  ap_log_error(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request->server,
+    "Request ID value is: %ld", request_context_->request_id());
 }
 
 InstawebHandler::~InstawebHandler() {
