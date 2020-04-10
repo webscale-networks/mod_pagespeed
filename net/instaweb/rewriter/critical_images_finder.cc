@@ -437,7 +437,7 @@ RenderedImages* CriticalImagesFinder::JsonMapToRenderedImagesMap(
     }
     return rendered_images;
   } catch (std::exception& e) {
-    LOG(WARNING) << "Bad Json rendered images dimensions map";
+    LOG(WARNING) << "Bad Json rendered image dimensions map";
     return NULL;
   }
 }
