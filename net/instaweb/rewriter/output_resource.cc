@@ -285,6 +285,8 @@ void OutputResource::clear_cached_result() {
 GoogleString OutputResource::ComputeSignature() {
   GoogleString signing_key = rewrite_options_->url_signing_key();
   GoogleString computed_signature;
+  MessageHandler* handler = server_context_->message_handler();
+  handler->Message(kInfo,"ST=> OutputResource::ComputeSignature");
   if (!signing_key.empty()) {
     GoogleString data = HttpCacheKey();
     int data_length =

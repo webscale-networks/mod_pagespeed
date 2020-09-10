@@ -2624,6 +2624,7 @@ void RewriteContext::FetchCacheDone(CacheLookupResult* cache_result) {
   // serves out the bits with a shortened TTL; if we fail at any point
   // we call StartFetchReconstruction which will invoke the normal process of
   // locking things, fetching inputs, rewriting, and so on.
+  handler_->Message(kInfo,"ST=> RewriteContext::FetchCacheDone");
 
   scoped_ptr<CacheLookupResult> owned_cache_result(cache_result);
   CheckNotFrozen();

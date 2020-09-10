@@ -108,7 +108,7 @@ bool ResourceFetch::BlockingFetch(const GoogleUrl& url,
   int64 start = server_context->timer()->NowMs();
   MessageHandler* message_handler = server_context->message_handler();
   FetchRace race(callback, server_context->thread_system(), message_handler);
-
+  message_handler->Message(kInfo,"ST=> ResourceFetch::BlockingFetch");
   // Don't auto-cleanup the driver since we use driver->options and
   // driver->DecodeUrl below. In some cases, the driver will be done (and
   // cleaned) before this next call even returns.

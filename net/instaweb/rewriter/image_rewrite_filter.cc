@@ -1069,6 +1069,7 @@ RewriteResult ImageRewriteFilter::RewriteLoadedResourceImpl(
   const RewriteOptions* options = driver()->options();
 
   resource_context = *rewrite_context->resource_context();
+  message_handler->Message(kInfo,"ST=> ImageRewriteFilter::RewriteLoadedResourceImpl");
 
   if (!encoder_.Decode(result->name(),
                        &urls, &resource_context, message_handler)) {

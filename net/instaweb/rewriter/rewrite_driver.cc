@@ -1640,6 +1640,7 @@ bool RewriteDriver::DecodeOutputResourceName(
 
 bool RewriteDriver::DecodeUrl(const GoogleUrl& url,
                               StringVector* decoded_urls) const {
+  handler_->Message(kInfo,"ST=> RewriteDriver::DecodeUrl");
   return DecodeUrlGivenOptions(url, options(),
                                server_context()->url_namer(), decoded_urls);
 }
@@ -1670,6 +1671,8 @@ OutputResourcePtr RewriteDriver::DecodeOutputResource(
     RewriteFilter** filter) const {
   ResourceNamer namer;
   OutputResourceKind kind;
+  handler_->Message(kInfo,"ST=> RewriteDriver::DecodeOutputResource");
+
   if (!DecodeOutputResourceName(gurl, options(), server_context()->url_namer(),
                                 &namer, &kind, filter)) {
     return OutputResourcePtr();
@@ -3371,6 +3374,7 @@ bool RewriteDriver::Write(const ResourceVector& inputs,
   // and cache the output using meta_data's default headers which are to cache
   // forever.
   MessageHandler* handler = message_handler();
+  handler->Message(kInfo,"ST=> RewriteDriver::Write");
   Writer* writer = output->BeginWrite(handler);
   bool ret = (writer != NULL);
   if (ret) {
