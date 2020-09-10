@@ -1640,7 +1640,7 @@ bool RewriteDriver::DecodeOutputResourceName(
 
 bool RewriteDriver::DecodeUrl(const GoogleUrl& url,
                               StringVector* decoded_urls) const {
-  handler_->Message(kInfo,"ST=> RewriteDriver::DecodeUrl");
+  message_handler->Message(kInfo,"ST=> RewriteDriver::DecodeUrl");
   return DecodeUrlGivenOptions(url, options(),
                                server_context()->url_namer(), decoded_urls);
 }
