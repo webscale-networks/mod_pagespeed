@@ -2610,6 +2610,9 @@ bool RewriteDriver::GenerateOutputResourceNameAndUrl(
     GoogleString* name,
     GoogleUrl* mapped_gurl,
     GoogleString* failure_reason) {
+
+  MessageHandler* handler = message_handler();
+  handler->Message(kInfo,"ST=> RewriteDriver::GenerateOutputResourceNameAndUrl");
   if (input_resource.get() == NULL) {
     *failure_reason = "No input resource.";
     return false;
@@ -2739,6 +2742,10 @@ OutputResourcePtr RewriteDriver::CreateOutputResourceWithUnmappedUrl(
   OutputResourcePtr resource;
   GoogleString mapped_domain;  // Unused. TODO(sligocki): Stop setting this?
   GoogleUrl mapped_gurl;
+
+  MessageHandler* handler = message_handler();
+  handler->Message(kInfo,"ST=> RewriteDriver::CreateOutputResourceWithUnmappedUrl");
+
   // Get the domain and URL after any domain lawyer rewriting.
   if (!options()->IsAllowed(unmapped_gurl.Spec())) {
     *failure_reason = StrCat("Rewriting disallowed for ", unmapped_gurl.Spec());

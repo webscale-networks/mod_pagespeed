@@ -185,6 +185,8 @@ GoogleString OutputResource::HttpCacheKey() const {
   GoogleString mapped_domain_name;
   GoogleUrl resolved_request;
   const DomainLawyer* lawyer = rewrite_options()->domain_lawyer();
+  MessageHandler* handler = server_context()->message_handler();
+  handler->Message(kInfo,"ST=>OutputResource::HttpCacheKey() ");
 
   // MapRequestToDomain needs a base URL, which ought to be irrelevant here,
   // as we're already absolute.

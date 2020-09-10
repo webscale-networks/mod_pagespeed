@@ -52,29 +52,31 @@ bool UrlPartnership::AddUrl(const StringPiece& untrimmed_resource_url,
   GoogleString resource_url, mapped_domain_name;
   bool ret = false;
   TrimWhitespace(untrimmed_resource_url, &resource_url);
+  handler->Message(kInfo,"ST=> UrlPartnership::AddUrl");
 
   if (resource_url.empty()) {
     handler->Message(
-        kInfo, "Cannot rewrite empty URL relative to %s",
+        kInfo, "ST=> Cannot rewrite empty URL relative to %s",
         original_origin_and_path_.spec_c_str());
   } else if (!original_origin_and_path_.IsWebValid()) {
     handler->Message(
-        kInfo, "Cannot rewrite %s relative to invalid url %s",
+        kInfo, "ST=> Cannot rewrite %s relative to invalid url %s",
         resource_url.c_str(),
         original_origin_and_path_.spec_c_str());
   } else {
+    handler->Message(kInfo,"ST=> UrlPartnership::AddUrl  else ");
     // First resolve the original request to ensure that it is allowed by the
     // options.
     scoped_ptr<GoogleUrl> resolved_request(
         new GoogleUrl(original_origin_and_path_, resource_url));
     if (!resolved_request->IsWebValid()) {
       handler->Message(
-          kInfo, "URL %s cannot be resolved relative to base URL %s",
+          kInfo, "ST=> URL %s cannot be resolved relative to base URL %s",
           resource_url.c_str(),
           original_origin_and_path_.spec_c_str());
     } else if (!rewrite_options_->IsAllowed(resolved_request->Spec())) {
       handler->Message(kInfo,
-                       "Rewriting URL %s is disallowed via configuration",
+                       " ST=> Rewriting URL %s is disallowed via configuration",
                        resolved_request->spec_c_str());
     } else if (FindResourceDomain(original_origin_and_path_,
                                   url_namer_,
@@ -83,18 +85,22 @@ bool UrlPartnership::AddUrl(const StringPiece& untrimmed_resource_url,
                                   &mapped_domain_name,
                                   handler)) {
       if (url_vector_.empty()) {
+        handler->Message(kInfo," ST=> Rewriting URL url_vector_.empty()");
         domain_and_path_prefix_.swap(mapped_domain_name);
         ret = true;
       } else {
+        handler->Message(kInfo," ST=> Rewriting URL not url_vector_.empty()");
         GoogleUrl domain_url(domain_and_path_prefix_);
         GoogleUrl mapped_url(mapped_domain_name);
         ret = (domain_url.Origin() == mapped_url.Origin());
         if (ret && !rewrite_options_->combine_across_paths()) {
+          handler->Message(kInfo," ST=> Rewriting URL not !rewrite_options_->combine_across_paths()");
           ret = (ResolvedBase() == resolved_request->AllExceptLeaf());
         }
       }
 
       if (ret) {
+        handler->Message(kInfo," ST=> Rewriting ret");
         url_vector_.push_back(resolved_request.release());
         int index = url_vector_.size() - 1;
         IncrementalResolve(index);
@@ -112,11 +118,14 @@ bool UrlPartnership::FindResourceDomain(const GoogleUrl& base_url,
                                         MessageHandler* handler) {
   bool ret = false;
   GoogleString resource_url;
+  handler->Message(kInfo,"ST=> UrlPartnership::FindResourceDomain");
   if (url_namer->Decode(*resource, rewrite_options, &resource_url)) {
+    handler->Message(kInfo,"ST=> UrlPartnership::FindResourceDomain url_namer->Decode");
     resource->Reset(resource_url);
     ret = resource->IsWebValid();
     resource->Origin().CopyToString(domain);
   } else {
+    handler->Message(kInfo,"ST=> UrlPartnership::FindResourceDomain MapRequestToDomain");
     ret = rewrite_options->domain_lawyer()->MapRequestToDomain(
         base_url, resource->Spec(), domain,
         resource, handler);
