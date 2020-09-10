@@ -110,7 +110,6 @@ bool CssOutlineFilter::WriteResource(const StringPiece& content,
   // from the page.
   // TODO(morlovich) check for proper behavior in case of embedded BOM.
   // TODO(matterbury) but AFAICT you cannot have a BOM in a <style> tag.
-  handler->Message(kInfo,"ST=> CssOutlineFilter::WriteResource");
   return driver()->Write(
       ResourceVector(), content, &kContentTypeCss, StringPiece(), resource);
 }
@@ -126,7 +125,7 @@ void CssOutlineFilter::OutlineStyle(HtmlElement* style_element,
     // See http://www.w3.org/TR/html5/semantics.html#the-style-element
     if (type == NULL || strcmp(type, kContentTypeCss.mime_type()) == 0) {
       MessageHandler* handler = driver()->message_handler();
-      handler->Message(kInfo,"ST=> CssOutlineFilter::OutlineStyle");
+      handler->Message(0,"ST=> CssOutlineFilter::WriteResource");
       // Create outline resource at the document location,
       // not base URL location.
       GoogleString failure_reason;
