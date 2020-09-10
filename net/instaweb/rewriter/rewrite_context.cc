@@ -1570,6 +1570,8 @@ GoogleString RewriteContext::LockName() const {
 
 void RewriteContext::FetchInputs() {
   ++num_predecessors_;
+  MessageHandler* handler = Driver()->message_handler();
+  handler->Message(kInfo,"ST=> RewriteContext::FetchInputs()");
 
   for (int i = 0, n = slots_.size(); i < n; ++i) {
     const ResourceSlotPtr& slot = slots_[i];
@@ -1585,6 +1587,7 @@ void RewriteContext::FetchInputs() {
       bool handled_internally = false;
       GoogleUrl resource_gurl(resource->url());
       if (FindServerContext()->IsPagespeedResource(resource_gurl)) {
+        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() IsPagespeedResource");
         RewriteDriver* nested_driver = Driver()->Clone();
         RewriteFilter* filter = NULL;
         // We grab the filter now (and not just call DecodeOutputResource
@@ -1610,14 +1613,17 @@ void RewriteContext::FetchInputs() {
       }
 
       if (!handled_internally) {
+        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() !handled_internally");
         Resource::NotCacheablePolicy noncache_policy =
             Resource::kReportFailureIfNotCacheable;
         if (IsFetchRewrite()) {
           // This is a fetch.  We want to try to get the input resource even if
           // it was previously noted to be uncacheable. Note that this applies
           // only to top-level rewrites: anything nested will still fail.
+          handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() !handled_internally IsFetchRewrite()");
           DCHECK(!has_parent());
           if (!has_parent()) {
+            handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() !handled_internally !has_parent()");
             noncache_policy = Resource::kLoadEvenIfNotCacheable;
           }
         }
@@ -2760,6 +2766,7 @@ void RewriteContext::StartFetchReconstruction() {
   // Note that in case of fetches we continue even if we didn't manage to
   // take the lock.
   CheckNotFrozen();
+  handler_->Message(kInfo,"ST=> RewriteContext::StartFetchReconstruction");
   partitions_->Clear();
   FetchInputs();
 }

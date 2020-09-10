@@ -82,6 +82,9 @@ void ResourceFetch::StartWithDriver(
     ServerContext* server_context, RewriteDriver* driver,
     AsyncFetch* async_fetch) {
 
+  MessageHandler *handler = server_context->message_handler();
+  handler->Message(kInfo,"ST=> StartWithDriver");
+
   ResourceFetch* resource_fetch = new ResourceFetch(
       url, cleanup_mode, driver, server_context->timer(),
       server_context->message_handler(), async_fetch);
