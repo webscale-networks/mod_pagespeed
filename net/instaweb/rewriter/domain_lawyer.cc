@@ -86,7 +86,6 @@ class DomainLawyer::Domain {
         handler->Message(kInfo,"ST=> MergeOrigin rewrite_domain_ != NULL");
         rewrite_domain_->MergeOrigin(origin_domain, handler);
       }
-      handler->Message(kInfo,"ST=> MergeOrigin rewrite_domain_ =%s and origin_domain_ =%s",rewrite_domain_->name_.c_str(),origin_domain_->name_.c_str());
     }
     cycle_breadcrumb_ = false;
   }
