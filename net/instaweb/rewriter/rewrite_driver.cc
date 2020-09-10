@@ -1566,6 +1566,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
     }
   } else {
     *url_base = (gurl.AllExceptLeaf()).as_string();
+    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper url_base");
   }
 
   // Now let's reject as mal-formed if the id string is not
@@ -1620,7 +1621,8 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
                                gurl.spec_c_str(), id_str.c_str());
     return false;
   }
-
+  
+  message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper  return true");
   return true;
 }
 
