@@ -859,7 +859,7 @@ bool DomainLawyer::AddShard(
                                 handler);
   can_rewrite_domains_ |= result;
   handler->Message(kInfo,"ST=> AddShard can_rewrite_domains_ =%d and result =%d",can_rewrite_domains_,result);
-  handler->Message(kInfo,"ST=> AddShard shard_domain_name =%d and comma_separated_shards =%d",shard_domain_name.as_string(),comma_separated_shards.as_string());
+  handler->Message(kInfo,"ST=> AddShard shard_domain_name =%d and comma_separated_shards =%d",shard_domain_name.as_string().c_str(),comma_separated_shards.as_string().c_str());
   return result;
 }
 
