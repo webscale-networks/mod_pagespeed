@@ -1507,7 +1507,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
 
   StringPiece name = gurl.LeafSansQuery();
   if (!Decode(name, namer_out)) {
-     message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper Decode ret false name =%s",name.as_string());
+     message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper Decode ret false name =%s",name.as_string().c_str());
     return false;
   }
 
@@ -1622,7 +1622,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
     return false;
   }
   
-  message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper return true name =%s",name.as_string());
+  message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper return true name =%s",name.as_string().c_str());
   return true;
 }
 
