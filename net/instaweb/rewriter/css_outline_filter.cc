@@ -124,8 +124,6 @@ void CssOutlineFilter::OutlineStyle(HtmlElement* style_element,
     // We only deal with CSS styles.  If no type specified, CSS is assumed.
     // See http://www.w3.org/TR/html5/semantics.html#the-style-element
     if (type == NULL || strcmp(type, kContentTypeCss.mime_type()) == 0) {
-      MessageHandler* handler = driver()->message_handler();
-      handler->Message(0,"ST=> CssOutlineFilter::WriteResource");
       // Create outline resource at the document location,
       // not base URL location.
       GoogleString failure_reason;
