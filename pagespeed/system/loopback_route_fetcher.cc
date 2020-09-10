@@ -27,6 +27,7 @@
 #include "pagespeed/kernel/http/google_url.h"
 #include "pagespeed/kernel/http/http_names.h"
 #include "pagespeed/kernel/http/request_headers.h"
+#include "pagespeed/kernel/base/message_handler.h"
 
 #include "apr_network_io.h"
 
@@ -65,7 +66,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
     fetch->Done(false);
     return;
   }
-
+  message_handler->Message(kInfo,"ST=> LoopbackRouteFetcher::Fetch ");
   RequestHeaders* request_headers = fetch->request_headers();
 
   // Check to see if the URL we hand to the backend has an origin we were never
@@ -78,6 +79,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
           parsed_url.Origin().as_string())) {
     // If there is no host header, make sure to add one, since we are about
     // to munge the URL.
+    message_handler->Message(kInfo,"ST=> LoopbackRouteFetcher::Fetch in condition");
     if (request_headers->Lookup1(HttpAttributes::kHost) == NULL) {
       request_headers->Replace(HttpAttributes::kHost, parsed_url.HostAndPort());
     }
@@ -99,6 +101,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
     // just give you http://example.com.
     // See comments on GURL::Resolve().
     url = StrCat(scheme, "://", own_ip_, port_section, path_and_leaf);
+    message_handler->Message(kInfo,"ST=> LoopbackRouteFetcher::Fetch url=%s",url);
 
     // Note that we end up with host: containing the actual URL's host, but
     // the URL containing just our IP. This is technically wrong, but the

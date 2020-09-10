@@ -2514,6 +2514,7 @@ bool RewriteContext::Fetch(
                                           &RewriteContext::CancelFetch));
     return true;
   } else {
+    message_handler->Message(kInfo,"ST=> RewriteContext::Fetch else");
     fetch->response_headers()->SetStatusAndReason(HttpStatus::kNotFound);
     return false;
   }

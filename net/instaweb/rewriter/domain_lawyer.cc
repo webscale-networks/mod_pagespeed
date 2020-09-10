@@ -62,6 +62,7 @@ class DomainLawyer::Domain {
   void MergeOrigin(Domain* origin_domain, MessageHandler* handler) {
     if (cycle_breadcrumb_) {
       // See DomainLawyerTest.RewriteOriginCycle
+      handler->Message(kInfo,"ST=> MergeOrigin cycle_breadcrumb_");
       return;
     }
     cycle_breadcrumb_ = true;
@@ -82,8 +83,10 @@ class DomainLawyer::Domain {
         shards_[i]->MergeOrigin(origin_domain, handler);
       }
       if (rewrite_domain_ != NULL) {
+        handler->Message(kInfo,"ST=> MergeOrigin rewrite_domain_ != NULL");
         rewrite_domain_->MergeOrigin(origin_domain, handler);
       }
+      handler->Message(kInfo,"ST=> MergeOrigin rewrite_domain_ =%s and origin_domain_ =%s",rewrite_domain_->name_.c_str(),origin_domain_->name_.c_str());
     }
     cycle_breadcrumb_ = false;
   }
@@ -92,6 +95,7 @@ class DomainLawyer::Domain {
   // silently let the new rewrite_domain win.
   bool SetRewriteDomain(Domain* rewrite_domain, MessageHandler* handler) {
     if (rewrite_domain == rewrite_domain_) {
+      handler->Message(kInfo,"ST=> SetRewriteDomain rewrite_domain == rewrite_domain_");
       return true;
     }
 
@@ -109,11 +113,13 @@ class DomainLawyer::Domain {
                          rewrite_domain_->name_.c_str(),
                          rewrite_domain->name_.c_str());
       }
+      handler->Message(kInfo,"ST=> SetRewriteDomain ret false");
       return false;
     }
 
     rewrite_domain_ = rewrite_domain;
     rewrite_domain->MergeOrigin(origin_domain_, handler);
+    handler->Message(kInfo,"ST=> SetRewriteDomain ret true");
     return true;  // don't break old configs on this new consistency check.
   }
 
@@ -121,6 +127,7 @@ class DomainLawyer::Domain {
   // silently let the new origin_domain win.
   bool SetOriginDomain(Domain* origin_domain, MessageHandler* handler) {
     if (origin_domain == origin_domain_) {
+      handler->Message(kInfo,"ST=> SetOriginDomain origin_domain == origin_domain_");
       return true;
     }
 
@@ -139,6 +146,7 @@ class DomainLawyer::Domain {
                          origin_domain_->name_.c_str(),
                          origin_domain->name_.c_str());
       }
+      handler->Message(kInfo,"ST=> SetOriginDomain ret false ");
       return false;
     }
 
@@ -146,6 +154,7 @@ class DomainLawyer::Domain {
     if (rewrite_domain_ != NULL) {
       rewrite_domain_->MergeOrigin(origin_domain_, handler);
     }
+    handler->Message(kInfo,"ST=> SetOriginDomain ret true ");
 
     return true;
   }
@@ -169,12 +178,14 @@ class DomainLawyer::Domain {
                          name_.c_str(),
                          rewrite_domain_->name_.c_str(),
                          rewrite_domain->name_.c_str());
+         handler->Message(kInfo,"ST=> SetShardFrom ret false ");                 
         return false;
       }
     }
     MergeOrigin(rewrite_domain->origin_domain_, handler);
     rewrite_domain->shards_.push_back(this);
     rewrite_domain_ = rewrite_domain;
+    handler->Message(kInfo,"ST=> SetShardFrom ret true "); 
     return true;
   }
 
@@ -519,7 +530,7 @@ bool DomainLawyer::MapRequestToDomain(
   CHECK(original_request.IsAnyValid());
   GoogleUrl original_origin(original_request.Origin());
   resolved_request->Reset(original_request, resource_url);
-
+  handler->Message(kInfo,"ST=> MapRequestToDomain");
   bool ret = false;
   // We can map a request to/from http/https.
   if (resolved_request->IsWebValid()) {
@@ -530,16 +541,21 @@ bool DomainLawyer::MapRequestToDomain(
     // Gets the Domain* object out of that.
     Domain* resolved_domain = FindDomain(*resolved_request);
 
+     handler->Message(kInfo,"ST=> MapRequestToDomain resolved_request->IsWebValid()");
     // The origin domain is authorized by default.
     if (resolved_origin == original_origin) {
       resolved_origin.Spec().CopyToString(mapped_domain_name);
+      handler->Message(kInfo,"ST=> MapRequestToDomain resolved_origin == original_origin");
       ret = true;
     } else if (resolved_domain != NULL && resolved_domain->authorized()) {
+      handler->Message(kInfo,"ST=> MapRequestToDomain resolved_domain != NULL && resolved_domain->authorized()");
       if (resolved_domain->IsWildcarded()) {
         // This is a sharded domain. We do not do the sharding in this function.
+        handler->Message(kInfo,"ST=> MapRequestToDomain resolved_domain->IsWildcarded()");
         resolved_origin.Spec().CopyToString(mapped_domain_name);
       } else {
         *mapped_domain_name = resolved_domain->name();
+        handler->Message(kInfo,"ST=> MapRequestToDomain *mapped_domain_name = resolved_domain->name();");
       }
       ret = true;
     }
@@ -553,6 +569,7 @@ bool DomainLawyer::MapRequestToDomain(
     // HTML files.  See MapOrigin below which is used to redirect fetch
     // requests to a different domain (e.g. localhost).
     if (ret && resolved_domain != NULL) {
+      handler->Message(kInfo,"ST=> MapRequestToDomain ret && resolved_domain != NULL");
       Domain* mapped_domain = resolved_domain->rewrite_domain();
       if (mapped_domain != NULL) {
         CHECK(!mapped_domain->IsWildcarded());
@@ -567,6 +584,7 @@ bool DomainLawyer::MapRequestToDomain(
       }
     }
   }
+  handler->Message(kInfo,"ST=> MapRequestToDomain ret  =%d",ret);
   return ret;
 }
 
@@ -687,6 +705,7 @@ bool DomainLawyer::AddRewriteDomainMapping(
                                 true /* authorize */,
                                 handler);
   can_rewrite_domains_ |= result;
+  handler->Message(kInfo,"ST=> AddRewriteDomainMapping can_rewrite_domains_ =%d and result =%d",can_rewrite_domains_,result);
   return result;
 }
 
@@ -746,6 +765,7 @@ bool DomainLawyer::AddTwoProtocolRewriteDomainMapping(
                                         &Domain::SetRewriteDomain,
                                         true /*authorize */, handler);
   can_rewrite_domains_ |= result;
+  handler->Message(kInfo,"ST=> AddTwoProtocolRewriteDomainMapping can_rewrite_domains_ =%d and result =%d",can_rewrite_domains_,result);
   return result;
 }
 
@@ -839,6 +859,7 @@ bool DomainLawyer::AddShard(
                                 true /* authorize */,
                                 handler);
   can_rewrite_domains_ |= result;
+  handler->Message(kInfo,"ST=> AddShard can_rewrite_domains_ =%d and result =%d",can_rewrite_domains_,result);
   return result;
 }
 

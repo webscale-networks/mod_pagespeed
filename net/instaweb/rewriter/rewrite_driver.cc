@@ -1491,18 +1491,23 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
   // In forward proxy in preserve-URLs mode we want to fetch .pagespeed.
   // resource, i.e. do not decode and and do not fetch original (especially
   // that encoded one will never be cached internally).
+
+  message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper");
   if (options_to_use != NULL && options_to_use->oblivious_pagespeed_urls()) {
+    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper options_to_use ret false");
     return false;
   }
 
   // First, we can't handle anything that's not a valid URL nor is named
   // properly as our resource.
   if (!gurl.IsWebValid()) {
+    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper IsWebValid ret false");
     return false;
   }
 
   StringPiece name = gurl.LeafSansQuery();
   if (!Decode(name, namer_out)) {
+     message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper Decode ret false");
     return false;
   }
 
@@ -1510,6 +1515,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
   // OutputResources with a computable URL. (We do accept 'wrong' hashes since
   // they could come up legitimately under some asynchrony scenarios)
   if (namer_out->hash().empty()) {
+    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper namer_out ret false");
     return false;
   }
 
@@ -1552,8 +1558,10 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
     }
     GoogleUrl decoded_gurl(decoded_url);
     if (decoded_gurl.IsWebValid()) {
+      message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper decoded_gurl.IsWebValid()");
       *url_base = (decoded_gurl.AllExceptLeaf()).as_string();
     } else {
+      message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper decoded_gurl.IsWebValid() false");
       return false;
     }
   } else {
@@ -1750,7 +1758,9 @@ class CacheCallback : public OptionsAwareHTTPCacheCallback {
     //    http://shard1/foo   -->   http://master/foo
     //    http://shard2/foo   -->   http://master/foo
     //    http://master/foo   -->   http://master/foo
+   
     canonical_url_ = output_resource_->HttpCacheKey();
+    handler->Message(kInfo,"ST=> CacheCallback canonical_url_ =%s",canonical_url_);
   }
 
   virtual ~CacheCallback() {}
