@@ -171,10 +171,13 @@ GoogleString OutputResource::url() const {
   // Computing our URL is relatively expensive and it can be set externally,
   // so we compute it the first time we're called and cache the result;
   // computed_url_ is declared mutable.
-  if (computed_url_.empty()) {
+  MessageHandler* handler = server_context()->message_handler();
+  if (computed_url_.empty()) {    
+    handler->Message(kInfo,"ST=> OutputResource::url()");
     computed_url_ = server_context()->url_namer()->Encode(
         rewrite_options_, *this, UrlNamer::kSharded);
   }
+  handler->Message(kInfo,"ST=> OutputResource::url() computed_url_ =%s",computed_url_.c_str());
   return computed_url_;
 }
 

@@ -3224,6 +3224,7 @@ RewriteOptions::OptionSettingResult RewriteOptions::ParseAndSetOptionFromName2(
       // because we want people to be able to use script variables in nginx to
       // disable domain sharding with spdy/http2.
       // See pagespeed/module/https_support#h2_configuration_nginx
+      handler->Message(kInfo,"ST=> WriteableDomainLawyer()->AddShard");
       WriteableDomainLawyer()->AddShard(arg1, arg2, handler);
     }
   } else {
