@@ -1760,7 +1760,7 @@ class CacheCallback : public OptionsAwareHTTPCacheCallback {
     //    http://master/foo   -->   http://master/foo
    
     canonical_url_ = output_resource_->HttpCacheKey();
-    handler->Message(kInfo,"ST=> CacheCallback canonical_url_ =%s",canonical_url_);
+    handler->Message(kInfo,"ST=> CacheCallback canonical_url_ =%s",canonical_url_.c_str());
   }
 
   virtual ~CacheCallback() {}
