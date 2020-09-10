@@ -111,7 +111,6 @@ bool JsOutlineFilter::WriteResource(const GoogleString& content,
   // We don't provide charset here since in generally we can just inherit
   // from the page.
   // TODO(morlovich) check for proper behavior in case of embedded BOM.
-  handler->Message(kInfo,"ST=> JsOutlineFilter::WriteResource");
   return driver()->Write(
       ResourceVector(), content, &kContentTypeJavascript, StringPiece(),
       resource);
