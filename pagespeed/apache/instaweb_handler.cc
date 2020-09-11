@@ -595,13 +595,19 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
 
   // Finally, do the actual handling.
   bool handled = false;
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::handle_as_resource: url = %s", gurl->AllExceptLeaf().as_string().c_str());
   if (server_context->IsPagespeedResource(*gurl)) {
     handled = true;
     instaweb_handler.HandleAsPagespeedResource();
   } else if (instaweb_handler.HandleAsProxy()) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::handle_as_resource:HandleAsProxy");
     handled = true;
   } else if (options->in_place_rewriting_enabled() && options->enabled() &&
              options->IsAllowed(gurl->Spec())) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::handle_as_resource:HandleAsInPlace");
     handled = instaweb_handler.HandleAsInPlace();
   }
 
@@ -1177,7 +1183,10 @@ apr_status_t InstawebHandler::save_url_in_note(
     }
   }
 
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note");
+
   if (bypass_mod_rewrite) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note bypass_mod_rewrite");
     apr_table_set(request->notes, kResourceUrlNote, kResourceUrlYes);
   } else {
     // Leave behind a note for non-instaweb requests that says that
@@ -1187,6 +1196,7 @@ apr_status_t InstawebHandler::save_url_in_note(
     // The absence of this marker indicates that translate_name did
     // not get a chance to run, and thus we should try to look at
     // the URI directly.
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note !bypass_mod_rewrite");
     apr_table_set(request->notes, kResourceUrlNote, kResourceUrlNo);
   }
   return DECLINED;
