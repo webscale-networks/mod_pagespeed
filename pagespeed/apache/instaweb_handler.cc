@@ -1172,6 +1172,8 @@ apr_status_t InstawebHandler::save_url_in_note(
     // Note: We cannot use request->handler because it may not be set yet :(
     // TODO(sligocki): Make this robust to custom statistics and beacon URLs.
     StringPiece leaf = gurl.LeafSansQuery();
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in leaf=%s",leaf.as_string().c_str());
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in gurl.PathSansLeaf()=%s",gurl.PathSansLeaf().as_string().c_str());
     if (leaf == kStatisticsHandler || leaf == kConsoleHandler ||
         leaf == kGlobalStatisticsHandler || leaf == kMessageHandler ||
         leaf == kAdminHandler ||
@@ -1183,10 +1185,8 @@ apr_status_t InstawebHandler::save_url_in_note(
     }
   }
 
-  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note");
-
   if (bypass_mod_rewrite) {
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note bypass_mod_rewrite");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note bypass_mod_rewrite url=%s",gurl.AllExceptQuery().as_string().c_str());
     apr_table_set(request->notes, kResourceUrlNote, kResourceUrlYes);
   } else {
     // Leave behind a note for non-instaweb requests that says that
@@ -1196,7 +1196,7 @@ apr_status_t InstawebHandler::save_url_in_note(
     // The absence of this marker indicates that translate_name did
     // not get a chance to run, and thus we should try to look at
     // the URI directly.
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note !bypass_mod_rewrite");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in note !bypass_mod_rewrite url =%s",gurl.AllExceptQuery().as_string().c_str());
     apr_table_set(request->notes, kResourceUrlNote, kResourceUrlNo);
   }
   return DECLINED;
