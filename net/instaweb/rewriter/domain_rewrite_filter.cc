@@ -38,6 +38,7 @@
 #include "pagespeed/kernel/http/http_names.h"
 #include "pagespeed/kernel/http/response_headers.h"
 #include "pagespeed/kernel/http/semantic_type.h"
+#include "pagespeed/kernel/base/message_handler.h"
 
 namespace {
 
