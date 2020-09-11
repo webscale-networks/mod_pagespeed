@@ -491,12 +491,16 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     }
   }
 
+  MessageHandler * handler = server_context->message_handler();
+  handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite");
+
   if (!options->IsAllowed(orig_spec) ||
       // Don't rewrite a domain from an already-rewritten resource.
       server_context->IsPagespeedResource(orig_url)) {
     // Even though domain is unchanged, we need to store absolute URL in
     // rewritten_url.
     orig_url.Spec().CopyToString(rewritten_url);
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite kDomainUnchanged mapped_domain_name=%s",rewritten_url.c_str());
     return kDomainUnchanged;
   }
 
@@ -515,6 +519,7 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     // Even though domain is unchanged, we need to store absolute URL in
     // rewritten_url.
     orig_url.Spec().CopyToString(rewritten_url);
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite kDomainUnchanged mapped_domain_name=%s",mapped_domain_name.c_str());
     return kDomainUnchanged;
   }
 
@@ -532,8 +537,10 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
 
   // Return true if really changed the url with this rewrite.
   if (orig_spec == *rewritten_url) {
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite URL unchanged url =%s",rewritten_url->c_str());
     return kDomainUnchanged;
   } else {
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite URL Changed to =%s",rewritten_url->c_str());
     return kRewroteDomain;
   }
 }

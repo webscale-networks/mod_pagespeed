@@ -503,7 +503,7 @@ bool ServerContext::IsPagespeedResource(const GoogleUrl& url) const {
   ResourceNamer namer;
   OutputResourceKind kind;
   RewriteFilter* filter;
-  message_handler_->Message(kInfo,"ST=> IsPagespeedResource");
+  message_handler_->Message(kInfo,"ST=> ServerContext::IsPagespeedResource");
   return decoding_driver_->DecodeOutputResourceName(
       url, global_options(), url_namer(), &namer, &kind, &filter);
 }

@@ -1608,6 +1608,7 @@ void RewriteContext::FetchInputs() {
           bool ret = nested_driver->FetchResource(resource->url(), callback);
           DCHECK(ret);
         } else {
+          handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() nested_driver->Cleanup()");
           nested_driver->Cleanup();
         }
       }

@@ -1635,6 +1635,7 @@ bool RewriteDriver::DecodeOutputResourceName(
     RewriteFilter** filter_out) const {
   StringVector urls;
   GoogleString url_base;
+  message_handler()->Message(kInfo,"ST=> RewriteDriver::DecodeOutputResourceName");
   return DecodeOutputResourceNameHelper(
       gurl, options_to_use, url_namer, namer_out, kind_out,
       filter_out, &url_base, &urls);
@@ -1665,6 +1666,7 @@ bool RewriteDriver::DecodeUrlGivenOptions(
       (*decoded_urls)[i] = full_url.Spec().as_string();
     }
   }
+  message_handler()->Message(kInfo,"ST=> RewriteDriver::DecodeUrlGivenOptions");
   return is_decoded;
 }
 
@@ -1677,6 +1679,7 @@ OutputResourcePtr RewriteDriver::DecodeOutputResource(
 
   if (!DecodeOutputResourceName(gurl, options(), server_context()->url_namer(),
                                 &namer, &kind, filter)) {
+    message_handler()->Message(kInfo,"ST=> RewriteDriver::DecodeOutputResourceName ret false return new pointer");                              
     return OutputResourcePtr();
   }
 
