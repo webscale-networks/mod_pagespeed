@@ -544,7 +544,7 @@ bool DomainLawyer::MapRequestToDomain(
     // The origin domain is authorized by default.
     if (resolved_origin == original_origin) {
       resolved_origin.Spec().CopyToString(mapped_domain_name);
-      handler->Message(kInfo,"ST=> MapRequestToDomain resolved_origin == original_origin");
+      handler->Message(kInfo,"ST=> MapRequestToDomain resolved_origin == original_origin; resolved_origin=%s",resolved_origin.AllExceptLeaf().as_string().c_str());
       ret = true;
     } else if (resolved_domain != NULL && resolved_domain->authorized()) {
       handler->Message(kInfo,"ST=> MapRequestToDomain resolved_domain != NULL && resolved_domain->authorized()");

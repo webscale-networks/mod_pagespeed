@@ -517,6 +517,7 @@ bool ServerContext::DecodeUrlGivenOptions(const GoogleUrl& url,
                                           const RewriteOptions* options,
                                           const UrlNamer* url_namer,
                                           StringVector* decoded_urls) const {
+  message_handler_->Message(kInfo,"ST=> ServerContext::DecodeUrlGivenOptions");
   return decoding_driver_->DecodeUrlGivenOptions(url, options, url_namer,
                                                  decoded_urls);
 }

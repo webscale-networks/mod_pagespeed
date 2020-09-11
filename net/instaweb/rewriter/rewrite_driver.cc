@@ -1508,6 +1508,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
   StringPiece name = gurl.LeafSansQuery();
   if (!Decode(name, namer_out)) {
      message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper Decode ret false name =%s",name.as_string().c_str());
+     message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper Decode ret false gurl =%s",gurl.AllExceptLeaf().as_string().c_str());
     return false;
   }
 
@@ -1657,6 +1658,7 @@ bool RewriteDriver::DecodeUrlGivenOptions(
   OutputResourceKind kind;
   RewriteFilter* filter = NULL;
   GoogleString url_base;
+  message_handler()->Message(kInfo,"ST=> RewriteDriver::DecodeUrlGivenOptions");
   bool is_decoded =  DecodeOutputResourceNameHelper(
       url, options, url_namer, &namer, &kind, &filter, &url_base, decoded_urls);
   if (is_decoded) {
