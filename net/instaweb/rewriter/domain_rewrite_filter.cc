@@ -501,7 +501,7 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     // Even though domain is unchanged, we need to store absolute URL in
     // rewritten_url.
     orig_url.Spec().CopyToString(rewritten_url);
-    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite kDomainUnchanged mapped_domain_name=%s",rewritten_url.c_str());
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite kDomainUnchanged mapped_domain_name=%s",rewritten_url->c_str());
     return kDomainUnchanged;
   }
 
