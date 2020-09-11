@@ -180,6 +180,7 @@ class JavascriptFilter::Context : public SingleRewriteContext {
       // We produce a source map if they are enabled or requested.
       GoogleUrl original_gurl(input->url());
       scoped_ptr<GoogleUrl> source_gurl;
+      message_handler->Message(kInfo,"ST=> RewriteResult RewriteJavascript");
       if (server_context->IsPagespeedResource(original_gurl)) {
         // Do not append Pagespeed=off if input is already a pagespeed resource.
         source_gurl.reset(new GoogleUrl);

@@ -2492,7 +2492,7 @@ bool RewriteContext::DecodeFetchUrls(
       // which will then be decoded to http://my.com/a.css and b.css so for the
       // first decoding here we need to retain the encoded domain name.
       GoogleUrl* url = NULL;
-
+      message_handler->Message(kInfo,"ST=> RewriteContext::DecodeFetchUrls");
       if (check_for_multiple_rewrites) {
         scoped_ptr<GoogleUrl> orig_based_url(
             new GoogleUrl(original_base, urls[i]));

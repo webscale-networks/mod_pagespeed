@@ -51,6 +51,7 @@
 #include "pagespeed/kernel/http/response_headers.h"
 #include "pagespeed/kernel/http/semantic_type.h"
 #include "pagespeed/opt/logging/enums.pb.h"
+#include "pagespeed/kernel/base/message_handler.h"
 
 namespace net_instaweb {
 class MessageHandler;
@@ -144,6 +145,8 @@ bool CacheExtender::ShouldRewriteResource(
   }
   UrlNamer* url_namer = driver()->server_context()->url_namer();
   GoogleUrl origin_gurl(url);
+  MessageHandler* message_handler = driver()->message_handler();
+  message_handler->Message(kInfo,"ST=>CacheExtender::ShouldRewriteResource ");
 
   // We won't initiate a CacheExtender::Context with a pagespeed
   // resource URL.  However, an upstream filter might have rewritten
@@ -158,15 +161,18 @@ bool CacheExtender::ShouldRewriteResource(
     return !url_namer->IsProxyEncoded(origin_gurl);
   }
   const DomainLawyer* lawyer = driver()->options()->domain_lawyer();
-
+  
   // We return true for IsProxyMapped because when reconstructing
   // MAPPED_DOMAIN/file.pagespeed.ce.HASH.ext we won't be changing
   // the domain (WillDomainChange==false) but we want this function
   // to return true so that we can reconstruct the cache-extension and
   // serve the result with long public caching.  Without IsProxyMapped,
   // we'd serve the result with cache-control:private,max-age=300.
-  return (lawyer->IsProxyMapped(origin_gurl) ||
+  bool ret= (lawyer->IsProxyMapped(origin_gurl) ||
           lawyer->WillDomainChange(origin_gurl));
+
+  message_handler->Message(kInfo,"ST=>CacheExtender::ShouldRewriteResource ret= %d",ret);
+  return ret;
 }
 
 void CacheExtender::StartElementImpl(HtmlElement* element) {
@@ -213,6 +219,8 @@ void CacheExtender::StartElementImpl(HtmlElement* element) {
       if (input_resource.get() == NULL) {
         continue;
       }
+      MessageHandler* message_handler = driver()->message_handler();
+      message_handler->Message(kInfo,"ST=>CacheExtender::StartElementImpl ");
 
       GoogleUrl input_gurl(input_resource->url());
       if (server_context()->IsPagespeedResource(input_gurl)) {
