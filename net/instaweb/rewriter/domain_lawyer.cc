@@ -569,7 +569,6 @@ bool DomainLawyer::MapRequestToDomain(
     // requests to a different domain (e.g. localhost).
     if (ret && resolved_domain != NULL) {
       Domain* mapped_domain = resolved_domain->rewrite_domain();
-      handler->Message(kInfo,"ST=> MapRequestToDomain mapped_domain =%s",mapped_domain->name().c_str());
       if (mapped_domain != NULL) {
         CHECK(!mapped_domain->IsWildcarded());
         CHECK(mapped_domain != resolved_domain);
@@ -577,6 +576,7 @@ bool DomainLawyer::MapRequestToDomain(
         GoogleUrl mapped_request;
         ret = MapUrlHelper(*resolved_domain, *mapped_domain,
                            *resolved_request, &mapped_request);
+        handler->Message(kInfo,"ST=> MapRequestToDomain mapped_request =%s",mapped_request.AllExceptLeaf().as_string().c_str());
         if (ret) {
           resolved_request->Swap(&mapped_request);
           handler->Message(kInfo,"ST=> MapRequestToDomain resolved_request =%s",resolved_request->AllExceptQuery().as_string().c_str());
