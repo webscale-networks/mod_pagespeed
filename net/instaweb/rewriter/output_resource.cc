@@ -189,7 +189,6 @@ GoogleString OutputResource::HttpCacheKey() const {
   GoogleUrl resolved_request;
   const DomainLawyer* lawyer = rewrite_options()->domain_lawyer();
   MessageHandler* handler = server_context()->message_handler();
-  handler->Message(kInfo,"ST=>OutputResource::HttpCacheKey() ");
 
   // MapRequestToDomain needs a base URL, which ought to be irrelevant here,
   // as we're already absolute.
@@ -200,6 +199,7 @@ GoogleString OutputResource::HttpCacheKey() const {
           server_context()->message_handler())) {
     resolved_request.Spec().CopyToString(&canonical_url);
   }
+  handler->Message(kInfo,"ST=>OutputResource::HttpCacheKey() canonical_url=%s ",canonical_url.c_str());
   return canonical_url;
 }
 

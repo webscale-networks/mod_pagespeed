@@ -554,7 +554,7 @@ bool DomainLawyer::MapRequestToDomain(
         resolved_origin.Spec().CopyToString(mapped_domain_name);
       } else {
         *mapped_domain_name = resolved_domain->name();
-        handler->Message(kInfo,"ST=> MapRequestToDomain *mapped_domain_name = resolved_domain->name();");
+        handler->Message(kInfo,"ST=> MapRequestToDomain *mapped_domain_name = resolved_domain->name(); *mapped_domain_name =%s",mapped_domain_name->c_str());
       }
       ret = true;
     }
@@ -568,8 +568,8 @@ bool DomainLawyer::MapRequestToDomain(
     // HTML files.  See MapOrigin below which is used to redirect fetch
     // requests to a different domain (e.g. localhost).
     if (ret && resolved_domain != NULL) {
-      handler->Message(kInfo,"ST=> MapRequestToDomain ret && resolved_domain != NULL");
       Domain* mapped_domain = resolved_domain->rewrite_domain();
+      handler->Message(kInfo,"ST=> MapRequestToDomain mapped_domain =%s",mapped_domain->name().c_str());
       if (mapped_domain != NULL) {
         CHECK(!mapped_domain->IsWildcarded());
         CHECK(mapped_domain != resolved_domain);
@@ -579,6 +579,7 @@ bool DomainLawyer::MapRequestToDomain(
                            *resolved_request, &mapped_request);
         if (ret) {
           resolved_request->Swap(&mapped_request);
+          handler->Message(kInfo,"ST=> MapRequestToDomain resolved_request =%s",resolved_request->AllExceptQuery().as_string().c_str());
         }
       }
     }

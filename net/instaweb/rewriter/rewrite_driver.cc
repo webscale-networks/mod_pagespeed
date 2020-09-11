@@ -1566,7 +1566,7 @@ bool RewriteDriver::DecodeOutputResourceNameHelper(
     }
   } else {
     *url_base = (gurl.AllExceptLeaf()).as_string();
-    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper url_base");
+    message_handler()->Message(kInfo,"ST=> DecodeOutputResourceNameHelper url_base=%s",url_base->c_str());
   }
 
   // Now let's reject as mal-formed if the id string is not
@@ -1765,7 +1765,7 @@ class CacheCallback : public OptionsAwareHTTPCacheCallback {
     //    http://master/foo   -->   http://master/foo
    
     canonical_url_ = output_resource_->HttpCacheKey();
-    handler->Message(kInfo,"ST=> CacheCallback canonical_url_ =");
+    handler->Message(kInfo,"ST=> CacheCallback canonical_url_ =%s",canonical_url_.c_str());
   }
 
   virtual ~CacheCallback() {}
@@ -3525,7 +3525,7 @@ bool RewriteDriver::LookupMetadataForOutputResource(
 
   SetBaseUrlForFetch(gurl.Spec());
   OutputResourcePtr output_resource;
-
+  message_handler()->Message(kInfo,"ST=>LookupMetadataForOutputResource is_pagespeed_resource=%d",is_pagespeed_resource);
   if (is_pagespeed_resource) {
     output_resource.reset(DecodeOutputResource(gurl, &filter));
   } else {

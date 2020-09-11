@@ -593,15 +593,21 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
   scoped_ptr<RequestHeaders> request_headers(new RequestHeaders);
   const RewriteOptions* options = instaweb_handler.options();
 
+  MessageHandler* handler = server_context_->message_handler()
+  handler->Message(kInfo,"ST=> InstawebHandler::handle_as_resource");
+
   // Finally, do the actual handling.
   bool handled = false;
   if (server_context->IsPagespeedResource(*gurl)) {
     handled = true;
+    handler->Message(kInfo,"ST=> InstawebHandler::handle_as_resource HandleAsPagespeedResource" );
     instaweb_handler.HandleAsPagespeedResource();
   } else if (instaweb_handler.HandleAsProxy()) {
+    handler->Message(kInfo,"ST=> InstawebHandler::handle_as_resource HandleAsProxy" );
     handled = true;
   } else if (options->in_place_rewriting_enabled() && options->enabled() &&
              options->IsAllowed(gurl->Spec())) {
+    handler->Message(kInfo,"ST=> InstawebHandler::handle_as_resource HandleAsInPlace" );
     handled = instaweb_handler.HandleAsInPlace();
   }
 
@@ -927,6 +933,9 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
   ApacheRewriteDriverFactory* factory = server_context->apache_factory();
   ApacheMessageHandler* message_handler = factory->apache_message_handler();
   StringPiece request_handler_str = request->handler;
+
+  MessageHandler* hand= server_context_->message_handler();
+  hand->Message(kInfo,"ST=> InstawebHandler::instaweb_handler");
 
   const char* url = InstawebContext::MakeRequestUrl(*global_config, request);
   GoogleUrl gurl;
