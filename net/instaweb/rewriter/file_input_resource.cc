@@ -137,7 +137,9 @@ void FileInputResource::LoadAndCallback(
     const RequestContextPtr& request_context,
     AsyncCallback* callback) {
   MessageHandler* handler = server_context()->message_handler();
+  handler->Message(kInfo,"ST=> FileInputResource::LoadAndCallback");
   if (!loaded()) {
+    handler->Message(kInfo,"ST=> FileInputResource::LoadAndCallback not loaded");
     // Load the file from disk.  Make sure we correctly read a timestamp
     // before loading the file.  A failure (say due to EINTR) on the
     // timestamp read could leave us with populated metadata and
@@ -154,9 +156,11 @@ void FileInputResource::LoadAndCallback(
         last_modified_time_sec_ != kTimestampUnset &&
         file_system->ReadFile(
             filename_.c_str(), max_file_size_, &value_, handler)) {
+      handler->Message(kInfo,"ST=> FileInputResource::LoadAndCallback SetDefaultHeaders");
       SetDefaultHeaders(type_, &response_headers_, handler);
       value_.SetHeaders(&response_headers_);
     } else {
+      handler->Message(kInfo,"ST=> FileInputResource::LoadAndCallback clear headers");
       value_.Clear();
       response_headers_.Clear();
       last_modified_time_sec_ = kTimestampUnset;

@@ -1627,6 +1627,7 @@ void RewriteContext::FetchInputs() {
             noncache_policy = Resource::kLoadEvenIfNotCacheable;
           }
         }
+        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() resource->LoadAsync");
         resource->LoadAsync(
             noncache_policy, Driver()->request_context(),
             new ResourceFetchCallback(this, resource, i));
