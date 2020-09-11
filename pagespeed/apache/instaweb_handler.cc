@@ -595,7 +595,6 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
 
   // Finally, do the actual handling.
   bool handled = false;
-  server_context_->message_handler()->Message(kInfo,"ST=> InstawebHandler::handle_as_resource");
   if (server_context->IsPagespeedResource(*gurl)) {
     handled = true;
     instaweb_handler.HandleAsPagespeedResource();
@@ -603,10 +602,9 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
     handled = true;
   } else if (options->in_place_rewriting_enabled() && options->enabled() &&
              options->IsAllowed(gurl->Spec())) {
-    server_context_->message_handler()->Message(kInfo,"ST=> InstawebHandler::handle_as_resource handled in place");
     handled = instaweb_handler.HandleAsInPlace();
   }
-  server_context_->message_handler()->Message(kInfo,"ST=> InstawebHandler::handle_as_resource handled = %d",handled);
+
   return handled;
 }
 
@@ -1178,7 +1176,7 @@ apr_status_t InstawebHandler::save_url_in_note(
       bypass_mod_rewrite = true;
     }
   }
-  server_context_->message_handler()->Message(kInfo,"ST=> save_url_in_note bypass_mod_rewrite=%d",bypass_mod_rewrite);
+
   if (bypass_mod_rewrite) {
     apr_table_set(request->notes, kResourceUrlNote, kResourceUrlYes);
   } else {
