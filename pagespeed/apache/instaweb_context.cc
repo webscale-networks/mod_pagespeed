@@ -399,6 +399,7 @@ const char* InstawebContext::MakeRequestUrl(
       } else {
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url unparsed_uri "<< request->unparsed_uri; 
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url req "<< request->the_request;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url hostname "<< request->server->server_hostname;        
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
       LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl Gurl "<< url; 

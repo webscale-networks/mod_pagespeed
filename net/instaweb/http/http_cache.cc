@@ -305,21 +305,21 @@ void HTTPCache::UpdateStats(
     CacheInterface::KeyState backend_state, FindResult result,
     bool has_fallback, bool is_expired, MessageHandler* handler) {
   if (backend_state == CacheInterface::kAvailable) {
-    handler->Message(kInfo,"ST=> Cache backend hit");
+    handler->Message(kInfo,"ST=> Cache backend hit key =%s",key.c_str());
     cache_backend_hits_->Add(1);
   } else {
-    handler->Message(kInfo,"ST=> Cache backend miss");
+    handler->Message(kInfo,"ST=> Cache backend miss key =%s",key.c_str());
     cache_backend_misses_->Add(1);
   }
   if (result.status == kFound) {
-     handler->Message(kInfo,"ST=> Cache found");
+     handler->Message(kInfo,"ST=> Cache found key =%s",key.c_str());
     cache_hits_->Add(1);
     DCHECK(!has_fallback);
   } else {
-    handler->Message(kInfo,"ST=> Cache miss");
+    handler->Message(kInfo,"ST=> Cache miss key =%s",key.c_str());
     cache_misses_->Add(1);
     if (has_fallback) {
-      handler->Message(kInfo,"ST=> Cache miss has_fallback");
+      handler->Message(kInfo,"ST=> Cache miss has_fallback key =%s",key.c_str());
       cache_fallbacks_->Add(1);
     }
     if (is_expired) {
