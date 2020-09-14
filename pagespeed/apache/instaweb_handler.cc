@@ -115,7 +115,7 @@ InstawebHandler::InstawebHandler(request_rec* request)
 
   original_url_ = InstawebContext::MakeRequestUrl(*options_, request);
   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
-      "ST=> InstawebHandler::InstawebHandler original_url_=%s",original_url_);
+      "ST=> InstawebHandler::InstawebHandler original_url_=%s",original_url_.c_str());
   apache_request_context_->set_url(original_url_);
 
   // Note: request_context_ must be initialized before ComputeCustomOptions().
@@ -1177,7 +1177,7 @@ apr_status_t InstawebHandler::save_url_in_note(
   if (server_context->global_config()->unplugged()) {
     return DECLINED;
   }
-   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in")
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in");
   // This call to MakeRequestUrl() not only returns the url but also
   // saves it for future use so that if another module changes the
   // url in the request, we still have the original one.
