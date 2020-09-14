@@ -529,7 +529,11 @@ bool DomainLawyer::MapRequestToDomain(
   CHECK(original_request.IsAnyValid());
   GoogleUrl original_origin(original_request.Origin());
   resolved_request->Reset(original_request, resource_url);
-  handler->Message(kInfo,"ST=> MapRequestToDomain");
+  handler->Message(kInfo,"ST=> MapRequestToDomain original_request =%s resource_url=%s mapped_domain_name =%s original_request.origin=%s",
+  original_request.AllExceptQuery().as_string().c_str(),
+  resource_url.as_string().c_str(),
+  mapped_domain_name->c_str(),
+  original_origin.AllExceptQuery().as_string().c_str());
   bool ret = false;
   // We can map a request to/from http/https.
   if (resolved_request->IsWebValid()) {
@@ -540,7 +544,7 @@ bool DomainLawyer::MapRequestToDomain(
     // Gets the Domain* object out of that.
     Domain* resolved_domain = FindDomain(*resolved_request);
 
-     handler->Message(kInfo,"ST=> MapRequestToDomain resolved_request->IsWebValid()");
+     handler->Message(kInfo,"ST=> MapRequestToDomain resolved_request->IsWebValid() resolved_request =%s",resolved_request->AllExceptQuery().as_string().c_str());
     // The origin domain is authorized by default.
     if (resolved_origin == original_origin) {
       resolved_origin.Spec().CopyToString(mapped_domain_name);
