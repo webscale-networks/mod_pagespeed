@@ -608,7 +608,6 @@ class RewriteContext::ResourceRevalidateCallback
   }
 
   virtual void Done(bool lock_failure, bool resource_ok) {
-    handler_->Message(kInfo,"ST=> RewriteContext::Done()");
     RewriteDriver* rewrite_driver = rewrite_context_->Driver();
     rewrite_driver->AddRewriteTask(
         MakeFunction(rewrite_context_, &RewriteContext::ResourceRevalidateDone,

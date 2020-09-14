@@ -2969,10 +2969,12 @@ void RewriteDriver::AddRewriteTask(Function* task) {
   // tasks, we must consider scheduler_sequence_ to be immutable.  This
   // bool helps enforce that invariant.
   executing_rewrite_tasks_.set_value(true);
-
+  MessageHandler* handler = message_handler();
+  handler->Message(kInfo,"ST=> RewriteDriver::AddRewriteTask");
   if (scheduler_sequence_.get() != NULL) {
     scheduler_sequence_->Add(task);
   } else {
+    handler->Message(kInfo,"ST=> RewriteDriver::AddRewriteTask rewrite_worker_->Add");
     rewrite_worker_->Add(task);
   }
 }
