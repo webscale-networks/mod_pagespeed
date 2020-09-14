@@ -1252,6 +1252,7 @@ apr_status_t InstawebHandler::instaweb_map_to_storage(request_rec* request) {
   }
 
   if (get_instaweb_resource_url(request, server_context) == NULL) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb_map_to_storage DECLINED");
     return DECLINED;
   }
 
@@ -1308,7 +1309,7 @@ apr_status_t InstawebHandler::instaweb_map_to_storage(request_rec* request) {
   // also don't want APR_DIR, since that would make mod_mime to set the
   // mimetype to httpd/unix-directory).
   request->finfo.filetype = APR_UNKFILE;
-
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb_map_to_storage APACHE_OK");
   // Keep core_map_to_storage from running and rejecting our long filenames.
   return APACHE_OK;
 }

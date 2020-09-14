@@ -778,6 +778,7 @@ bool DomainLawyer::AddOriginDomainMapping(
     const StringPiece& comma_separated_from_domains,
     const StringPiece& host_header,
     MessageHandler* handler) {
+  handler->Message(kInfo,"ST=> DomainLawyer::AddOriginDomainMapping");    
   return MapDomainHelper(to_domain_name, comma_separated_from_domains,
                          host_header,
                          &Domain::SetOriginDomain,
@@ -893,6 +894,7 @@ bool DomainLawyer::MapDomainHelper(
   if (to_domain == NULL) {
     return false;
   }
+  handler->Message(kInfo, "ST=> DomainLawyer::MapDomainHelper");
 
   bool ret = false;
   bool mapped_a_domain = false;
@@ -911,6 +913,7 @@ bool DomainLawyer::MapDomainHelper(
       if (from_domain != NULL) {
         GoogleUrl from_url(from_domain->name());
         if (to_url.Origin() == from_url.Origin()) {
+          handler->Message(kInfo, "ST=> DomainLawyer::MapDomainHelper to_url== from_url to_url =%s",to_url.AllExceptQuery().as_string().c_str());
           // Ignore requests to map to the same scheme://hostname:port/.
         } else if (!allow_wildcards && from_domain->IsWildcarded()) {
           handler->Message(kError, "Cannot map from a wildcarded domain: %s",
@@ -918,6 +921,7 @@ bool DomainLawyer::MapDomainHelper(
           ret = false;
         } else {
           bool ok = (from_domain->*set_domain_fn)(to_domain, handler);
+          handler->Message(kInfo, "ST=> DomainLawyer::MapDomainHelper set map domain to_domain header=%s",to_domain->host_header().c_str();
           ret &= ok;
           mapped_a_domain |= ok;
         }
