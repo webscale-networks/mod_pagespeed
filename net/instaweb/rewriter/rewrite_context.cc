@@ -608,6 +608,8 @@ class RewriteContext::ResourceRevalidateCallback
   }
 
   virtual void Done(bool lock_failure, bool resource_ok) {
+    MessageHandler* handler = Driver()->message_handler();
+    handler->Message(kInfo,"ST=> RewriteContext::Done()");
     RewriteDriver* rewrite_driver = rewrite_context_->Driver();
     rewrite_driver->AddRewriteTask(
         MakeFunction(rewrite_context_, &RewriteContext::ResourceRevalidateDone,
@@ -1403,6 +1405,8 @@ void RewriteContext::OutputCacheMiss() {
   if (server_context->shutting_down()) {
     LockFailed();
   } else {
+    MessageHandler* handler = Driver()->message_handler();
+    handler->Message(kInfo,"ST=> RewriteContext::FetchInputs()");
     ObtainLockForCreation(server_context,
                           MakeFunction(this,
                                        &RewriteContext::CallFetchInputs,
@@ -1462,6 +1466,8 @@ void RewriteContext::ReleaseCreationLock(bool success) {
 }
 
 void RewriteContext::CallFetchInputs() {
+  MessageHandler* handler = Driver()->message_handler();
+  handler->Message(kInfo,"ST=> RewriteContext::FetchInputs()");
   Driver()->AddRewriteTask(MakeFunction(this, &RewriteContext::FetchInputs));
 }
 
@@ -1586,6 +1592,7 @@ void RewriteContext::FetchInputs() {
       // resource object (e.g. if we got a metadata hit on the previous step).
       bool handled_internally = false;
       GoogleUrl resource_gurl(resource->url());
+      handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() resource_gurl =%s",resource_gurl.AllExceptQuery().as_string().c_str());
       if (FindServerContext()->IsPagespeedResource(resource_gurl)) {
         handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() IsPagespeedResource");
         RewriteDriver* nested_driver = Driver()->Clone();
@@ -1614,7 +1621,7 @@ void RewriteContext::FetchInputs() {
       }
 
       if (!handled_internally) {
-        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() !handled_internally");
+        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() not handled_internally");
         Resource::NotCacheablePolicy noncache_policy =
             Resource::kReportFailureIfNotCacheable;
         if (IsFetchRewrite()) {
@@ -1628,7 +1635,7 @@ void RewriteContext::FetchInputs() {
             noncache_policy = Resource::kLoadEvenIfNotCacheable;
           }
         }
-        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() resource->LoadAsync");
+        handler->Message(kInfo,"ST=> RewriteContext::FetchInputs() resource->LoadAsync url =%s",resource_gurl.AllExceptQuery().as_string().c_str());
         resource->LoadAsync(
             noncache_policy, Driver()->request_context(),
             new ResourceFetchCallback(this, resource, i));
@@ -1658,6 +1665,8 @@ void RewriteContext::ResourceFetchDone(
 void RewriteContext::ResourceRevalidateDone(InputInfo* input_info,
                                             bool success) {
   bool ok = false;
+  MessageHandler* handler = Driver()->message_handler();
+  handler->Message(kInfo,"ST=> RewriteContext::FetchInputs()");
   if (success) {
     ResourcePtr resource = slots_[input_info->index()]->resource();
     if (resource->IsValidAndCacheable()) {

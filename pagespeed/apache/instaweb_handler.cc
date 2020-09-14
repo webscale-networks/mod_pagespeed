@@ -452,6 +452,8 @@ static apr_status_t DeleteInPlaceRecorder(void* object) {
 // Handle url with In Place Resource Optimization (IPRO) flow.
 bool InstawebHandler::HandleAsInPlace() {
   bool handled = false;
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::HandleAsInPlace:");
 
   // We need to see if the origin request has cookies, so examine the
   // Apache request directly, as request_headers_ has been stripped of
@@ -662,6 +664,8 @@ void InstawebHandler::write_handler_response(const StringPiece& output,
 /* static */
 const char* InstawebHandler::get_instaweb_resource_url(
     request_rec* request, ApacheServerContext* server_context) {
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::get_instaweb_resource_url");
   const char* resource = apr_table_get(request->notes, kResourceUrlNote);
 
   // If our translate_name hook, save_url_hook, failed to run because some
@@ -919,6 +923,8 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
   ApacheServerContext* server_context =
       InstawebContext::ServerContextFromServerRec(request->server);
   ApacheConfig* global_config = server_context->global_config();
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler");
   // Escape ASAP if we're in unplugged mode.
   if (global_config->unplugged()) {
     return DECLINED;
@@ -1172,6 +1178,7 @@ apr_status_t InstawebHandler::save_url_in_note(
     // Note: We cannot use request->handler because it may not be set yet :(
     // TODO(sligocki): Make this robust to custom statistics and beacon URLs.
     StringPiece leaf = gurl.LeafSansQuery();
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in gurl=%s",gurl.AllExceptQuery().as_string().c_str());
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in leaf=%s",leaf.as_string().c_str());
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in gurl.PathSansLeaf()=%s",gurl.PathSansLeaf().as_string().c_str());
     if (leaf == kStatisticsHandler || leaf == kConsoleHandler ||
@@ -1205,6 +1212,7 @@ apr_status_t InstawebHandler::save_url_in_note(
 // Override core_map_to_storage for pagespeed resources.
 /* static */
 apr_status_t InstawebHandler::instaweb_map_to_storage(request_rec* request) {
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb_map_to_storage");
   if (request->proxyreq == PROXYREQ_REVERSE) {
     // If Apache is acting as a reverse proxy for this request there is no
     // point in walking the directory because it doesn't apply to this

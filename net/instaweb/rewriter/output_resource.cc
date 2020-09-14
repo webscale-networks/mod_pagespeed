@@ -230,6 +230,8 @@ void OutputResource::LoadAndCallback(NotCacheablePolicy not_cacheable_policy,
   // rather through FetchResource. Yet 
   // ProxyInterfaceTest.TestNoDebugAbortAfterMoreThenOneYear does manage to hit
   // this code. See https://github.com/pagespeed/mod_pagespeed/issues/1553
+  MessageHandler* handler = server_context_->message_handler();
+  handler->Message(kInfo,"ST=> OutputResource::LoadAndCallback");
   callback->Done(false /* lock_failure */, writing_complete_);
 }
 
