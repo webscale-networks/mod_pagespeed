@@ -394,8 +394,10 @@ const char* InstawebContext::MakeRequestUrl(
 
       GoogleUrl gurl(request->unparsed_uri);
       if (gurl.IsAnyValid()) {
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl apr_pstrdup unparsed_uri"<< request->unparsed_uri; 
         url = apr_pstrdup(request->pool, request->unparsed_uri);
       } else {
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url unparsed_uri"<< request->unparsed_uri; 
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
       LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl Gurl "<< url; 
