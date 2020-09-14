@@ -110,8 +110,12 @@ InstawebHandler::InstawebHandler(request_rec* request)
 
   request_headers_.reset(new RequestHeaders);
   ApacheRequestToRequestHeaders(*request, request_headers_.get());
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::InstawebHandler");
 
   original_url_ = InstawebContext::MakeRequestUrl(*options_, request);
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::InstawebHandler original_url_=%s",original_url_);
   apache_request_context_->set_url(original_url_);
 
   // Note: request_context_ must be initialized before ComputeCustomOptions().
@@ -671,6 +675,8 @@ const char* InstawebHandler::get_instaweb_resource_url(
   // main reason we try to do this early is to save our URL before mod_rewrite
   // mutates it.
   if (resource == NULL) {
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::get_instaweb_resource_url resource=NULL");
     InstawebHandler::save_url_in_note(request, server_context);
     resource = apr_table_get(request->notes, kResourceUrlNote);
   }
@@ -680,6 +686,14 @@ const char* InstawebHandler::get_instaweb_resource_url(
   }
 
   const char* url = apr_table_get(request->notes, kPagespeedOriginalUrl);
+  if(url == NULL){
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::get_instaweb_resource_url ret url empty");
+
+  }else{
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::get_instaweb_resource_url ret url =%s",url);
+  }
   return url;
 }
 
@@ -1163,7 +1177,7 @@ apr_status_t InstawebHandler::save_url_in_note(
   if (server_context->global_config()->unplugged()) {
     return DECLINED;
   }
-
+   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in")
   // This call to MakeRequestUrl() not only returns the url but also
   // saves it for future use so that if another module changes the
   // url in the request, we still have the original one.
