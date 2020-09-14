@@ -393,6 +393,7 @@ const char* InstawebContext::MakeRequestUrl(
       }
 
       GoogleUrl gurl(request->unparsed_uri);
+      LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl before Gurl "<< url; 
       if (gurl.IsAnyValid()) {
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl apr_pstrdup unparsed_uri"<< request->unparsed_uri; 
         url = apr_pstrdup(request->pool, request->unparsed_uri);
