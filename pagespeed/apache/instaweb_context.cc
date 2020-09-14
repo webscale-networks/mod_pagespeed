@@ -337,9 +337,9 @@ const char* InstawebContext::MakeRequestUrl(
     const RewriteOptions& global_options, request_rec* request) {
   const char* url = apr_table_get(request->notes, kPagespeedOriginalUrl);
   if (url == NULL){
-   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl found no prev url");
+   LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl found no prev url";
   } else{
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl found prev url =%s",url);
+    LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url);
   }
   if (url == NULL) {
     // Go down the prev chain to see if there this request was a rewrite
@@ -354,9 +354,9 @@ const char* InstawebContext::MakeRequestUrl(
       url = apr_table_get(prev->notes, kPagespeedOriginalUrl);
     }   
     if (url == NULL) {
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl rewritten url null"); 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl rewritten url null"; 
     } else{
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl rewritten url=%s",url); 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl rewritten url "<<url; 
     }
 
     // Chase 'main' chain as well, clamping at kRequestChainLimit loops.
@@ -376,9 +376,9 @@ const char* InstawebContext::MakeRequestUrl(
     }
 
     if (url == NULL) {
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl main rewritten url null"); 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl main rewritten url null"; 
     } else{
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl main rewritten url=%s",url); 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl main rewritten url " << url; 
     }
 
     // ap_construct_url() only works when request->unparsed_uri is relative.
@@ -398,7 +398,7 @@ const char* InstawebContext::MakeRequestUrl(
       } else {
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
-      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> InstawebContext:MakeRequestUrl Gurl=%s",url); 
+      LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl Gurl "<< url; 
     }
 
     // Fix URL based on X-Forwarded-Proto.
