@@ -452,8 +452,6 @@ static apr_status_t DeleteInPlaceRecorder(void* object) {
 // Handle url with In Place Resource Optimization (IPRO) flow.
 bool InstawebHandler::HandleAsInPlace() {
   bool handled = false;
-  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
-      "ST=> InstawebHandler::HandleAsInPlace:");
 
   // We need to see if the origin request has cookies, so examine the
   // Apache request directly, as request_headers_ has been stripped of
