@@ -339,7 +339,7 @@ const char* InstawebContext::MakeRequestUrl(
   if (url == NULL){
    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl found no prev url";
   } else{
-    LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url);
+    LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url;
   }
   if (url == NULL) {
     // Go down the prev chain to see if there this request was a rewrite
