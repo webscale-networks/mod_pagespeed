@@ -794,7 +794,7 @@ bool DomainLawyer::AddProxyDomainMapping(
     const StringPiece& to_domain_name,
     MessageHandler* handler) {
   bool result;
-
+  handler->Message(kInfo,"ST=> DomainLawyer::AddProxyDomainMapping"); 
   if (to_domain_name.empty()) {
     // 1. Rewrite from origin_domain to proxy_domain.
     // 2. Set origin_domain->is_proxy = true.
@@ -921,7 +921,7 @@ bool DomainLawyer::MapDomainHelper(
           ret = false;
         } else {
           bool ok = (from_domain->*set_domain_fn)(to_domain, handler);
-          handler->Message(kInfo, "ST=> DomainLawyer::MapDomainHelper set map domain to_domain header=%s",to_domain->host_header().c_str();
+          handler->Message(kInfo, "ST=> DomainLawyer::MapDomainHelper set map domain to_domain header=%s",to_domain->host_header().c_str());
           ret &= ok;
           mapped_a_domain |= ok;
         }

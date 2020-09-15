@@ -682,6 +682,8 @@ const char* InstawebHandler::get_instaweb_resource_url(
   }
 
   if (resource != NULL && strcmp(resource, kResourceUrlNo) == 0) {
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::get_instaweb_resource_url resource=NULL2");
     return NULL;
   }
 
@@ -1175,6 +1177,7 @@ apr_status_t InstawebHandler::save_url_in_note(
     request_rec *request, ApacheServerContext* server_context) {
   // Escape ASAP if we're in unplugged mode.
   if (server_context->global_config()->unplugged()) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in UNPLUGGED");
     return DECLINED;
   }
   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_in");

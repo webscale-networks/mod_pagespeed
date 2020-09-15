@@ -78,6 +78,7 @@ void DomainRewriteFilter::UpdateDomainHeaders(
     const RewriteOptions* options, ResponseHeaders* headers) {
   // IframeFetcher panics when it sees a UA that can't do iframes well,
   // and throws a redirect.  This filter needs to respect that.
+  handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateDomainHeaders ");
   if ((headers == NULL) || headers->Has(kStickyRedirectHeader)) {
     return;
   }
@@ -119,6 +120,7 @@ bool DomainRewriteFilter::UpdateOneDomainHeader(
     HeaderSource src, const GoogleUrl& base_url,
     const ServerContext* server_context, const RewriteOptions* options,
     StringPiece name, StringPiece value_in, GoogleString* out) {
+  handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateOneDomainHeader ");
   bool rewrite_hyperlinks = options->domain_rewrite_hyperlinks();
   if (!rewrite_hyperlinks) {
     return false;
@@ -468,16 +470,19 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     GoogleString* rewritten_url) {
   if (url_to_rewrite.empty()) {
     rewritten_url->clear();
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite url_to_rewrite.empty()");
     return kDomainUnchanged;
   }
 
   GoogleUrl orig_url(base_url, url_to_rewrite);
   if (!orig_url.IsWebOrDataValid()) {
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite !orig_url.IsWebOrDataValid()");
     return kFail;
   }
 
   if (!orig_url.IsWebValid()) {
     url_to_rewrite.CopyToString(rewritten_url);
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite url_to_rewrite.CopyToString url_to_rewrite=%s",url_to_rewrite.as_string().c_str());
     return kDomainUnchanged;
   }
 
