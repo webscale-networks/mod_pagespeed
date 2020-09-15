@@ -130,6 +130,7 @@ bool UrlPartnership::FindResourceDomain(const GoogleUrl& base_url,
         base_url, resource->Spec(), domain,
         resource, handler);
   }
+  handler->Message(kInfo,"ST=> UrlPartnership::FindResourceDomain MapRequestToDomain ret =%d",ret);
   return ret;
 }
 

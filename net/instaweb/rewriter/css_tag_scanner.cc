@@ -582,6 +582,7 @@ CssTagScanner::Transformer::TransformStatus RewriteDomainTransformer::Transform(
     GoogleString* str) {
   GoogleString rewritten;  // Result of rewriting domain.
   GoogleString out;        // Result after trimming.
+  handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform str=%s rewritten=%s out =%s",str->c_str(),rewritten.c_str(),out.c_str());
   if (DomainRewriteFilter::Rewrite(
           *str, *old_base_url_, server_context_,
           options_,
@@ -589,6 +590,7 @@ CssTagScanner::Transformer::TransformStatus RewriteDomainTransformer::Transform(
           true, /* apply_domain_suffix */
           &rewritten)
       == DomainRewriteFilter::kFail) {
+  handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform ret failure");
     return kFailure;
   }
   // Note: Even if Rewrite() returned kDomainUnchanged, it will still absolutify
@@ -606,8 +608,10 @@ CssTagScanner::Transformer::TransformStatus RewriteDomainTransformer::Transform(
   }
 
   if (out == *str) {
+    handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform out =%s",out.c_str());
     return kNoChange;
   } else {
+    handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform out =%s str =%s",out.c_str(),str->c_str());
     str->swap(out);
     return kSuccess;
   }

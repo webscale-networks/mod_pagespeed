@@ -2645,10 +2645,11 @@ bool RewriteDriver::GenerateOutputResourceNameAndUrl(
                              unmapped_gurl.Spec());
     return false;
   }
-
+  handler->Message(kInfo,"ST=> RewriteDriver::GenerateOutputResourceNameAndUrl after MapRequestToDomain mapped_grul leaf=%s",mapped_gurl->LeafWithQuery().as_string().c_str());
   StringVector v;
   v.push_back(mapped_gurl->LeafWithQuery().as_string());
   encoder->Encode(v, data, name);
+  handler->Message(kInfo,"ST=> RewriteDriver::GenerateOutputResourceNameAndUrl name =%s",name->c_str());
   return true;
 }
 
