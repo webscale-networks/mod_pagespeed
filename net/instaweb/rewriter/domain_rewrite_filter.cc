@@ -133,6 +133,7 @@ bool DomainRewriteFilter::UpdateOneDomainHeader(
         value_in, base_url, server_context, options,
         false /* !apply_sharding */, true /* apply_domain_suffix */,
         out);
+    handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateOneDomainHeader rewrote status=%d",status);
     return (status == kRewroteDomain);
   }
 
@@ -144,6 +145,7 @@ bool DomainRewriteFilter::UpdateOneDomainHeader(
           url, base_url, server_context, options,
           false /* !apply_sharding */, true /* apply_domain_suffix */,
           &rewritten_url);
+      handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateOneDomainHeader StringCaseEqual rewrote status=%d",status);  
       if (status == kRewroteDomain) {
         // We quote the URL with ". This is because the double-quote
         // isn't a reserved character in URLs, so %-encoding to encode any
@@ -230,7 +232,7 @@ bool DomainRewriteFilter::UpdateSetCookieHeader(
       StrCat(domain_and_scheme, path), base_url, server_context, options,
       false /* !apply_sharding */, true /* apply_domain_suffix*/,
       &rewritten_url);
-
+  
   if (status != kRewroteDomain) {
     return false;
   }
@@ -390,6 +392,8 @@ void DomainRewriteFilter::ParseSetCookieAttributes(
 void DomainRewriteFilter::StartElementImpl(HtmlElement* element) {
   // The base URL is used to rewrite the attribute URL, which is all this
   // method does; if it isn't valid we can't so there's no point in going on.
+  MessageHandler * handler = server_context->message_handler();
+  handler->Message(kInfo,"ST=> DomainRewriteFilter::StartElemetImpl ");
   if (!BaseUrlIsValid()) {
     // The base URL is used to rewrite the attribute URL, which is all this
     // method does; if it isn't valid we can't so there's no point in going on.

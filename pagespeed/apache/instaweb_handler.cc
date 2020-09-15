@@ -955,10 +955,15 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
   StringPiece request_handler_str = request->handler;
 
   const char* url = InstawebContext::MakeRequestUrl(*global_config, request);
+
   GoogleUrl gurl;
   if (url == NULL || !gurl.Reset(url)) {
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler url not valid url ");
     return DECLINED;  // URL not valid, let someone other module handle.
   }
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler url =%s", url);
 
   if (global_config->proxy_all_requests_mode() && gurl.IsWebValid()) {
     InstawebHandler instaweb_handler(request);
@@ -1075,6 +1080,8 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
     }
   } else {
     const char* url = InstawebContext::MakeRequestUrl(*global_config, request);
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler else ");
     // Do not try to rewrite our own sub-request.
     if (url != NULL) {
       GoogleUrl gurl(url);
@@ -1090,10 +1097,14 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
                       request->method_number, gurl.spec_c_str());
       } else if (gurl.PathSansLeaf() ==
                  server_context->apache_factory()->static_asset_prefix()) {
+       ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler else  instaweb_static_handler");
         instaweb_static_handler(request, server_context);
         ret = APACHE_OK;
       } else if (!is_pagespeed_subrequest(request) &&
                  handle_as_resource(server_context, request, &gurl)) {
+       ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler else  !is_pagespeed_subrequest");
         ret = APACHE_OK;
       }
 
