@@ -3212,7 +3212,7 @@ RewriteOptions::OptionSettingResult RewriteOptions::ParseAndSetOptionFromName2(
       result = RewriteOptions::kOptionValueInvalid;
     }
   } else if (StringCaseEqual(name, kMapOriginDomain)) {
-    handler->Message(kInfo,"ST=> ParseAndSetOptionFromName2()-> kMapOriginDomain arg1=%s arg2=%s",arg1.as_string().c_str(),arg2.as_string().c_str());
+    handler->Message(kInfo,"ST=> ParseAndSetOptionFromName2()-> kMapOriginDomain arg1 arg2");
     WriteableDomainLawyer()->AddOriginDomainMapping(arg1, arg2, "", handler);
   } else if (StringCaseEqual(name, kMapProxyDomain)) {
     WriteableDomainLawyer()->AddProxyDomainMapping(arg1, arg2, "", handler);
