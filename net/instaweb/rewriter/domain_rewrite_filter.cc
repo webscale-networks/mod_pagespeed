@@ -392,8 +392,6 @@ void DomainRewriteFilter::ParseSetCookieAttributes(
 void DomainRewriteFilter::StartElementImpl(HtmlElement* element) {
   // The base URL is used to rewrite the attribute URL, which is all this
   // method does; if it isn't valid we can't so there's no point in going on.
-  MessageHandler * handler = server_context->message_handler();
-  handler->Message(kInfo,"ST=> DomainRewriteFilter::StartElemetImpl ");
   if (!BaseUrlIsValid()) {
     // The base URL is used to rewrite the attribute URL, which is all this
     // method does; if it isn't valid we can't so there's no point in going on.
