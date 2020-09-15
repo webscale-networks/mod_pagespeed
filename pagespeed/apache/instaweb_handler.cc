@@ -1180,7 +1180,11 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
 apr_status_t InstawebHandler::save_url_hook(request_rec *request) {
   ApacheServerContext* server_context =
       InstawebContext::ServerContextFromServerRec(request->server);
-  return save_url_in_note(request, server_context);
+   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_hook");
+  apr_status_t ret = save_url_in_note(request, server_context);
+   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,"ST=> instaweb:save_url_hook save_url_in_note done");
+  return ret;
+
 }
 
 /* static */
