@@ -3043,6 +3043,7 @@ RewriteDriver::CssResolutionStatus RewriteDriver::ResolveCssUrls(
     Writer* writer,
     MessageHandler* handler) {
   GoogleUrl output_base(output_css_base);
+  handler->Message(kInfo,"ST=> RewriteDriver::ResolveCssUrls");
   bool proxy_mode;
   if (ShouldAbsolutifyUrl(input_css_base, output_base, &proxy_mode)) {
     RewriteDomainTransformer transformer(&input_css_base, &output_base,
@@ -3059,8 +3060,10 @@ RewriteDriver::CssResolutionStatus RewriteDriver::ResolveCssUrls(
       transformer.set_trim_urls(false);
     }
     if (CssTagScanner::TransformUrls(contents, writer, &transformer, handler)) {
+      handler->Message(kInfo,"ST=> RewriteDriver::ResolveCssUrls TransformUrls success");
       return kSuccess;
     } else {
+      handler->Message(kInfo,"ST=> RewriteDriver::ResolveCssUrls TransformUrls failure");
       return kWriteFailed;
     }
   }

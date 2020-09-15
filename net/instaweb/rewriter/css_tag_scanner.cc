@@ -477,6 +477,7 @@ bool CssTagScanner::TransformUrlsStreaming(
       switch (transformer_->Transform(&url)) {
         case Transformer::kSuccess: {
           // Write out the buffered up part of input.
+          handler_->Message(kInfo,"ST=> CssTagScanner::TransformUrlsStreamimg url=%s",url.c_str());
           ok = ok && WriteRange(out_begin, out_end, writer, handler_);
 
           SerializeUrlUse(have_url, url,
@@ -516,6 +517,7 @@ bool CssTagScanner::TransformUrls(
     StringPiece contents, Writer* writer, Transformer* transformer,
     MessageHandler* handler) {
   CssTagScanner scanner(transformer, handler);
+  handler->Message(kInfo,"ST=> CssTagScanner::TransformUrls");
   return scanner.TransformUrlsStreaming(contents, kInputIncludesEnd, writer);
 }
 
@@ -604,7 +606,9 @@ CssTagScanner::Transformer::TransformStatus RewriteDomainTransformer::Transform(
   if (!trim_urls_ ||
       !UrlLeftTrimFilter::Trim(*new_base_url_, rewritten, &out, handler_)) {
     // If we couldn't trim rewritten -> out, just copy it (swap is optimization)
+    handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform trim_urls_ before out =%s",out.c_str());
     out.swap(rewritten);
+    handler_->Message(kInfo,"ST=> RewriteDomainTransformer::Transform trim_urls_ after out =%s",out.c_str());
   }
 
   if (out == *str) {
