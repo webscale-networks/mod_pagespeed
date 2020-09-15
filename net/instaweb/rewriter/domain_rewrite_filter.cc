@@ -78,6 +78,7 @@ void DomainRewriteFilter::UpdateDomainHeaders(
     const RewriteOptions* options, ResponseHeaders* headers) {
   // IframeFetcher panics when it sees a UA that can't do iframes well,
   // and throws a redirect.  This filter needs to respect that.
+  MessageHandler * handler = server_context->message_handler();
   handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateDomainHeaders ");
   if ((headers == NULL) || headers->Has(kStickyRedirectHeader)) {
     return;
@@ -120,6 +121,7 @@ bool DomainRewriteFilter::UpdateOneDomainHeader(
     HeaderSource src, const GoogleUrl& base_url,
     const ServerContext* server_context, const RewriteOptions* options,
     StringPiece name, StringPiece value_in, GoogleString* out) {
+  MessageHandler * handler = server_context->message_handler();
   handler->Message(kInfo,"ST=> DomainRewriteFilter::UpdateOneDomainHeader ");
   bool rewrite_hyperlinks = options->domain_rewrite_hyperlinks();
   if (!rewrite_hyperlinks) {
@@ -468,6 +470,7 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     const ServerContext* server_context, const RewriteOptions* options,
     bool apply_sharding, bool apply_domain_suffix,
     GoogleString* rewritten_url) {
+  MessageHandler * handler = server_context->message_handler();
   if (url_to_rewrite.empty()) {
     rewritten_url->clear();
     handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite url_to_rewrite.empty()");
@@ -497,7 +500,6 @@ DomainRewriteFilter::RewriteResult DomainRewriteFilter::Rewrite(
     }
   }
 
-  MessageHandler * handler = server_context->message_handler();
   handler->Message(kInfo,"ST=> DomainRewriteFilter::Rewrite");
 
   if (!options->IsAllowed(orig_spec) ||
