@@ -74,8 +74,8 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
   // and the if body will not run.
   if (!options_->domain_lawyer()->IsOriginKnown(parsed_url) &&
       !fetch->request_context()->IsSessionAuthorizedFetchOrigin(
-          parsed_url.Origin().as_string())) 
-    LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch when !IsOriginKnown parsed_url" << parsed_url.AllExceptQuery().as_string();{
+          parsed_url.Origin().as_string())) {
+   LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch when !IsOriginKnown parsed_url" << parsed_url.AllExceptQuery().as_string();
     // If there is no host header, make sure to add one, since we are about
     // to munge the URL.
     if (request_headers->Lookup1(HttpAttributes::kHost) == NULL) {
