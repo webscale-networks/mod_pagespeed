@@ -402,7 +402,7 @@ const char* InstawebContext::MakeRequestUrl(
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url hostname "<< request->server->server_hostname;        
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
-      LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl Gurl "<< url; 
+      LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url url "<< url; 
     }
 
     // Fix URL based on X-Forwarded-Proto.
@@ -433,6 +433,7 @@ const char* InstawebContext::MakeRequestUrl(
 
     // Note: apr_table_setn does not take ownership of url, it is owned by
     // the Apache pool.
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url apr_table_setn url "<< url; 
     apr_table_setn(request->notes, kPagespeedOriginalUrl, url);
   }
   return url;
@@ -449,6 +450,7 @@ void InstawebContext::SetExperimentStateAndCookie(request_rec* request,
   if (need_cookie) {
     ResponseHeaders resp_headers(options->ComputeHttpOptions());
     const char* url = apr_table_get(request->notes, kPagespeedOriginalUrl);
+    LOG(WARNING) << "ST=> InstawebContext:SetExperimentStateAndCookie apr_table_get url "<< url; 
     int experiment_value = options->experiment_id();
     server_context_->experiment_matcher()->StoreExperimentData(
         experiment_value, url,

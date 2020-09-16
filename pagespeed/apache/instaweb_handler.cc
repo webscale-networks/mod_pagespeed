@@ -593,6 +593,8 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
     return false;
   }
 
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::handle_as_resource: incoming url = %s", gurl->AllExceptQuery().as_string().c_str());
   InstawebHandler instaweb_handler(request);
   scoped_ptr<RequestHeaders> request_headers(new RequestHeaders);
   const RewriteOptions* options = instaweb_handler.options();
@@ -600,7 +602,7 @@ bool InstawebHandler::handle_as_resource(ApacheServerContext* server_context,
   // Finally, do the actual handling.
   bool handled = false;
   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
-      "ST=> InstawebHandler::handle_as_resource: url = %s", gurl->AllExceptLeaf().as_string().c_str());
+      "ST=> InstawebHandler::handle_as_resource: url = %s", gurl->AllExceptQuery().as_string().c_str());
   if (server_context->IsPagespeedResource(*gurl)) {
     handled = true;
     instaweb_handler.HandleAsPagespeedResource();
@@ -953,7 +955,8 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
   ApacheRewriteDriverFactory* factory = server_context->apache_factory();
   ApacheMessageHandler* message_handler = factory->apache_message_handler();
   StringPiece request_handler_str = request->handler;
-
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler MakeRequestUrl");
   const char* url = InstawebContext::MakeRequestUrl(*global_config, request);
 
   GoogleUrl gurl;
@@ -1079,6 +1082,8 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
                     "+remove_comments");
     }
   } else {
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler else MakeRequestUrl");
     const char* url = InstawebContext::MakeRequestUrl(*global_config, request);
       ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
       "ST=> InstawebHandler::instaweb_handler else ");
@@ -1108,12 +1113,17 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
         ret = APACHE_OK;
       }
 
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_handler else  ret =%d",ret);
+
       // Check for HTTP_NO_CONTENT here since that's the status used for a
       // successfully handled beacon.
       if (ret != APACHE_OK && ret != HTTP_NO_CONTENT &&
           gurl.Host() != "localhost" &&
           (global_config->slurping_enabled() || global_config->test_proxy() ||
            !global_config->domain_lawyer()->proxy_suffix().empty())) {
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+         "ST=> InstawebHandler::instaweb_handler else in ret != APACHE_OK && ret != HTTP_NO_CONTENT ");
         // TODO(jmarantz): Consider moving the InstawebHandler up above
         // where we assign 'const char* url' above because we are repeating
         // a bunch of string-hacking here in the constructor.  However, we
@@ -1126,6 +1136,8 @@ apr_status_t InstawebHandler::instaweb_handler(request_rec* request) {
       }
     }
   }
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+  "ST=> InstawebHandler::instaweb_handler else final ret =%d ",ret);
   return ret;
 }
 
