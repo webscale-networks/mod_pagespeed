@@ -339,7 +339,8 @@ const char* InstawebContext::MakeRequestUrl(
   if (url == NULL){
    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl found no prev url";
   } else{
-    LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url;
+    LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url;  
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  hostname "<< request->parsed_uri->hostent->h_name; 
   }
   if (url == NULL) {
     // Go down the prev chain to see if there this request was a rewrite
@@ -397,9 +398,12 @@ const char* InstawebContext::MakeRequestUrl(
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl apr_pstrdup unparsed_uri"<< request->unparsed_uri; 
         url = apr_pstrdup(request->pool, request->unparsed_uri);
       } else {
-        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url unparsed_uri "<< request->unparsed_uri; 
-        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url req "<< request->the_request;
-        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url hostname "<< request->server->server_hostname;        
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  unparsed_uri "<< request->unparsed_uri; 
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  uri "<< request->uri;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  filename "<< request->filename;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  canonical_filename "<< request->canonical_filename;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  path_info "<< request->path_info;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  hostname "<< request->server->server_hostname;      
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
       LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url url "<< url; 

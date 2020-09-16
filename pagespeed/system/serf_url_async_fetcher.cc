@@ -997,6 +997,7 @@ bool SerfFetch::Start(SerfUrlAsyncFetcher* fetcher,
   // Note: this is called in the thread's context, so this is when we do
   // the pool ops.
   fetcher_ = fetcher;
+  LOG(WARNING) << "ST=> SerfFetch::Start " ;
   apr_pool_create(&pool_, fetcher_->pool());
   bucket_alloc_ = serf_bucket_allocator_create(pool_, NULL, NULL);
 

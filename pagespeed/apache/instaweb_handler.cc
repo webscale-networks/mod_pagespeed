@@ -741,6 +741,8 @@ int InstawebHandler::log_request_headers(void* logging_data,
 /* static */
 void InstawebHandler::instaweb_static_handler(
     request_rec* request, ApacheServerContext* server_context) {
+  ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, request,
+      "ST=> InstawebHandler::instaweb_static_handler");
   StaticAssetManager* static_asset_manager =
       server_context->static_asset_manager();
   StringPiece request_uri_path = request->parsed_uri.path;
