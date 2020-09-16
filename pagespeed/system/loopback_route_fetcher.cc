@@ -56,7 +56,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
                                  AsyncFetch* fetch) {
   GoogleString url = original_url;
   GoogleUrl parsed_url(original_url);
-
+  LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch before parsed_url" << parsed_url.AllExceptQuery().as_string();
   if (!parsed_url.IsWebValid()) {
     // Fail immediately in case we can't parse the URL, rather than risk
     // getting weird handling due to inconsistencies in parsing between us
@@ -74,16 +74,19 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
   // and the if body will not run.
   if (!options_->domain_lawyer()->IsOriginKnown(parsed_url) &&
       !fetch->request_context()->IsSessionAuthorizedFetchOrigin(
-          parsed_url.Origin().as_string())) {
+          parsed_url.Origin().as_string())) 
+    LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch when !IsOriginKnown parsed_url" << parsed_url.AllExceptQuery().as_string();{
     // If there is no host header, make sure to add one, since we are about
     // to munge the URL.
     if (request_headers->Lookup1(HttpAttributes::kHost) == NULL) {
+      LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch Replace";
       request_headers->Replace(HttpAttributes::kHost, parsed_url.HostAndPort());
     }
 
     GoogleString path_and_leaf;
     // Includes leading slash.
     parsed_url.PathAndLeaf().CopyToString(&path_and_leaf);
+    LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch !IsOriginKnown path_and_leaf "<<path_and_leaf;
 
     StringPiece scheme = parsed_url.Scheme();
     GoogleString port_section = "";
@@ -105,6 +108,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
     // connect to our IP, pass only the path portion to the host, and
     // keep the host: header matching what's in the request_headers.
   }
+  LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch after parsed_url" << parsed_url.AllExceptQuery().as_string();
    LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch url" << url;
 
   backend_fetcher_->Fetch(url, message_handler, fetch);

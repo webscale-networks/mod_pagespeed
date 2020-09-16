@@ -922,7 +922,7 @@ class SerfThreadedFetcher : public SerfUrlAsyncFetcher {
     while (!xfer_fetches->empty()) {
       SerfFetch* fetch = xfer_fetches->RemoveOldest();
       if (StartFetch(fetch)) {
-        LOG(WARNING) << "ST=> Adding threaded fetch to url " ;
+        LOG(WARNING) << "ST=> Adding threaded fetch to url "<<fetch->DebugInfo() ;
         SERF_DEBUG(LOG(INFO) << "Adding threaded fetch to url "
                    << fetch->DebugInfo()
                    << " (" << active_fetches_.size() << ")");
