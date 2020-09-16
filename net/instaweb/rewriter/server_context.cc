@@ -733,7 +733,7 @@ RewriteDriver* ServerContext::NewUnmanagedRewriteDriver(
   // Set the initial reference, as the expectation is that the client
   // will need to call Cleanup() or FinishParse()
   rewrite_driver->AddUserReference();
-
+  message_handler_->Message(kInfo,"ST=> ServerContext::NewUnmanagedRewriteDriver");
   ApplySessionFetchers(request_ctx, rewrite_driver);
   return rewrite_driver;
 }
@@ -746,7 +746,7 @@ RewriteDriver* ServerContext::NewRewriteDriver(
 RewriteDriver* ServerContext::NewRewriteDriverFromPool(
     RewriteDriverPool* pool, const RequestContextPtr& request_ctx) {
   RewriteDriver* rewrite_driver = NULL;
-
+message_handler_->Message(kInfo,"ST=> ServerContext::NewRewriteDriverFromPool");
   const RewriteOptions* options = pool->TargetOptions();
   {
     ScopedMutex lock(rewrite_drivers_mutex_.get());

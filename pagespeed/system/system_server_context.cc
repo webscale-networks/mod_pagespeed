@@ -296,6 +296,8 @@ void SystemServerContext::ChildInit(SystemRewriteDriverFactory* factory) {
 
 void SystemServerContext::ApplySessionFetchers(
     const RequestContextPtr& request, RewriteDriver* driver) {
+
+ message_handler()->Message(kInfo,"ST=> SystemServerContext::ApplySessionFetchers"); 
   const SystemRewriteOptions* conf =
       SystemRewriteOptions::DynamicCast(driver->options());
   CHECK(conf != NULL);
