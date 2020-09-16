@@ -340,7 +340,8 @@ const char* InstawebContext::MakeRequestUrl(
    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl found no prev url";
   } else{
     LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url;  
-    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  hostname "<< request->parsed_uri.hostent->h_name; 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri hostname "<< request->parsed_uri.hostname; 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri path "<< request->parsed_uri.path; 
   }
   if (url == NULL) {
     // Go down the prev chain to see if there this request was a rewrite
