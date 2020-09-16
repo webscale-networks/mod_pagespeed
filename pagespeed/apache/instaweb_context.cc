@@ -342,6 +342,9 @@ const char* InstawebContext::MakeRequestUrl(
     LOG(WARNING) <<"ST=> InstawebContext:MakeRequestUrl found prev url " << url;  
     LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri hostname "<< request->parsed_uri.hostname; 
     LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri path "<< request->parsed_uri.path; 
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  filename "<< request->filename;
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  canonical_filename "<< request->canonical_filename;
+    LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  path_info "<< request->path_info;
   }
   if (url == NULL) {
     // Go down the prev chain to see if there this request was a rewrite
@@ -401,10 +404,12 @@ const char* InstawebContext::MakeRequestUrl(
       } else {
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  unparsed_uri "<< request->unparsed_uri; 
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  uri "<< request->uri;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  hostname "<< request->server->server_hostname;
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri hostname "<< request->parsed_uri.hostname; 
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl parsed_uri path "<< request->parsed_uri.path; 
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  filename "<< request->filename;
         LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  canonical_filename "<< request->canonical_filename;
-        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  path_info "<< request->path_info;
-        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  hostname "<< request->server->server_hostname;      
+        LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl  path_info "<< request->path_info;      
         url = ap_construct_url(request->pool, request->unparsed_uri, request);
       }
       LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl ap_construct_url url "<< url; 
@@ -416,6 +421,7 @@ const char* InstawebContext::MakeRequestUrl(
     // and there is a header: "X-Forwarded-Proto: https", then we update
     // this base URL to "https://www.example.com/".
     if (global_options.respect_x_forwarded_proto()) {
+      LOG(WARNING) << "ST=> InstawebContext:MakeRequestUrl respect_x_forwarded_proto "<< url; 
       const char* x_forwarded_proto =
           apr_table_get(request->headers_in, HttpAttributes::kXForwardedProto);
       if (x_forwarded_proto != NULL) {

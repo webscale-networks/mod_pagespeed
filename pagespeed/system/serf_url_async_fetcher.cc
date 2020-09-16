@@ -922,6 +922,7 @@ class SerfThreadedFetcher : public SerfUrlAsyncFetcher {
     while (!xfer_fetches->empty()) {
       SerfFetch* fetch = xfer_fetches->RemoveOldest();
       if (StartFetch(fetch)) {
+        LOG(WARNING) << "ST=> Adding threaded fetch to url " ;
         SERF_DEBUG(LOG(INFO) << "Adding threaded fetch to url "
                    << fetch->DebugInfo()
                    << " (" << active_fetches_.size() << ")");
@@ -1006,6 +1007,7 @@ bool SerfFetch::Start(SerfUrlAsyncFetcher* fetcher,
   if (!ParseUrl()) {
     return false;
   }
+  LOG(WARNING) << "ST=> SerfFetch::Start Parsed URL " ;
 
   using_https_ = StringCaseEqual("https", url_.scheme);
   DCHECK(fetcher->allow_https() || !using_https_);
@@ -1030,6 +1032,7 @@ bool SerfFetch::Start(SerfUrlAsyncFetcher* fetcher,
       serf_context_run(serf_context, SERF_DURATION_NOBLOCK, fetcher_->pool());
 
   if (status == APR_SUCCESS || APR_STATUS_IS_TIMEUP(status)) {
+    LOG(WARNING) << "ST=> SerfFetch::Start serf_context_run  pass" ;
     return true;
   } else {
     message_handler_->Error(DebugInfo().c_str(), 0,
@@ -1246,6 +1249,7 @@ bool SerfUrlAsyncFetcher::StartFetch(SerfFetch* fetch) {
                             SerfCompletionResult::kFailure);
     delete fetch;
   }
+  fetch->message_handler()->Message(kWarning, "ST=> SerfUrlAsyncFetcher::StartFetch started");
   return started;
 }
 

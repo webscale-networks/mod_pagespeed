@@ -105,6 +105,7 @@ void LoopbackRouteFetcher::Fetch(const GoogleString& original_url,
     // connect to our IP, pass only the path portion to the host, and
     // keep the host: header matching what's in the request_headers.
   }
+   LOG(WARNING) << "ST=> LoopbackRouteFetcher::Fetch url" << url;
 
   backend_fetcher_->Fetch(url, message_handler, fetch);
 }
